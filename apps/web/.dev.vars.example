@@ -1,0 +1,27 @@
+# Local dev secrets for `bun dev` (gitignored as .dev.vars). Copy this file to
+# apps/web/.dev.vars and fill with your DEV values. The @cloudflare/vite-plugin
+# runtime reads .dev.vars (not process env) when emulating the Worker locally.
+
+# Your DEV Convex deployment URL.
+CONVEX_URL=https://your-dev-deployment.convex.cloud
+# The Convex deploy key lives in GitHub `dev` env secrets (CONVEX_DEPLOY_KEY).
+# Locally, `bunx convex dev` does an interactive browser login — no key needed.
+
+# WorkOS — from your DEV (Sandbox) environment. Client id looks like `client_…`,
+# API key like `sk_test_…` (Sandbox) / `sk_live_…` (Production).
+WORKOS_CLIENT_ID=your-workos-client-id
+WORKOS_API_KEY=your-workos-api-key
+# Must exactly match a Redirect URI registered in the WorkOS dashboard.
+WORKOS_REDIRECT_URI=https://stack.internal/api/auth/callback
+# Generate one: `openssl rand -base64 32`
+WORKOS_COOKIE_PASSWORD=generate-a-32-byte-base64-secret-here
+
+# Cloudflare — only needed locally if you deploy from your machine; CI uses the
+# GitHub environment secrets/variables instead.
+CLOUDFLARE_ACCOUNT_ID=your-cloudflare-account-id
+CLOUDFLARE_API_TOKEN=your-cloudflare-api-token
+
+# Optional: a dedicated WorkOS test user for the screenshot tooling (scripts/).
+# When set, `bun run auth:login` signs in headlessly — no human step.
+TEST_USER_EMAIL=e2e@example.com
+TEST_USER_PASSWORD=your-test-user-password

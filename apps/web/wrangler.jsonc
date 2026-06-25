@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stack",
+  "main": "@tanstack/react-start/server-entry",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "env": {
+    "dev": {
+      "name": "stack-dev",
+      "routes": [{ "pattern": "dev.stack.example", "custom_domain": true }]
+    },
+    "prod": {
+      "name": "stack-prod",
+      "routes": [{ "pattern": "stack.example", "custom_domain": true }]
+    }
+  }
+}

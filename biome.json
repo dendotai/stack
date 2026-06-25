@@ -1,0 +1,68 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/.output",
+      "!**/.tanstack",
+      "!**/.wrangler",
+      "!**/.nitro",
+      "!**/.vinxi",
+      "!**/dist",
+      "!**/build",
+      "!**/_generated",
+      "!**/routeTree.gen.ts",
+      "!**/*.css"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "assist": {
+    "actions": {
+      "source": { "organizeImports": "on" }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "./_generated/server": {
+                "importNames": ["query", "mutation"],
+                "message": "Use authedQuery/authedMutation from ./authed so handlers get the resolved user on ctx. Raw query/mutation skip the auth seam entirely, and TypeScript can't catch that. Genuinely public or pre-user-row functions may suppress this with a biome-ignore explaining why."
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "arrowParentheses": "always"
+    }
+  },
+  "json": {
+    "formatter": {
+      "indentWidth": 2
+    }
+  }
+}

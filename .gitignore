@@ -1,0 +1,58 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# bun
+bun.lockb
+.bun/
+
+# build outputs
+dist/
+build/
+.output/
+.nitro/
+.tanstack/
+.vinxi/
+.wrangler/
+
+# env
+.env
+.env.local
+.env.*.local
+.dev.vars
+.dev.vars.*
+# ...but the committed templates must survive the patterns above:
+!.dev.vars.example
+!.env.local.example
+
+# convex
+.convex/
+
+# playwright screenshot tooling (apps/web/scripts): saved login session +
+# generated screenshots (test creds live in .dev.vars). All throwaway.
+.auth/
+screenshots/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# misc
+.DS_Store
+*.pem
+.vscode/*
+!.vscode/tasks.json
+.idea/
+
+# turbo / nx (if added later)
+.turbo/
+.nx/
+
+# coverage
+coverage/
+
+# typescript
+*.tsbuildinfo

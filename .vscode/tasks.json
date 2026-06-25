@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Dev: web",
+      "detail": "TanStack Start on :3000",
+      "type": "shell",
+      "command": "bun --filter ./apps/web dev",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: convex",
+      "detail": "Convex schema sync (packages/api)",
+      "type": "shell",
+      "command": "bunx convex dev",
+      "options": { "cwd": "${workspaceFolder}/packages/api" },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev",
+      "detail": "Run web + convex in parallel",
+      "dependsOn": ["Dev: web", "Dev: convex"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}

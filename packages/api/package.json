@@ -1,0 +1,27 @@
+{
+  "name": "@stack/api",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./convex/_generated/api.js",
+    "./schema": "./convex/schema.ts",
+    "./dataModel": "./convex/_generated/dataModel.js"
+  },
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p convex/tsconfig.json"
+  },
+  "dependencies": {
+    "convex": "^1.17.0",
+    "convex-helpers": "^0.1.119"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "convex-test": "^0.0.51",
+    "typescript": "^5.7.2",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
+  }
+}

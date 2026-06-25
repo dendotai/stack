@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.8
+
+      - run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun run test
+
+      # Build verifies Vite + Wrangler config compile cleanly. The runtime
+      # values aren't validated, so stubs are fine — real values are bound
+      # at deploy time via deploy.yml.
+      - name: Build
+        run: bun run build
+        env:
+          VITE_CONVEX_URL: https://example.convex.cloud
+          WORKOS_CLIENT_ID: stub
+          WORKOS_API_KEY: stub
+          WORKOS_COOKIE_PASSWORD: stubstubstubstubstubstubstubstub

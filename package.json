@@ -1,0 +1,24 @@
+{
+  "name": "stack",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "muxa -s @stack/web dev web -s @stack/api dev convex",
+    "build": "bun --filter '*' build",
+    "typecheck": "bun --filter '*' typecheck",
+    "test": "bun --filter '*' test",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check": "bun run lint && bun run typecheck && bun run test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.5",
+    "typescript": "^5.7.2"
+  },
+  "packageManager": "bun@1.3.8"
+}
