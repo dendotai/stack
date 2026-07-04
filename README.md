@@ -41,20 +41,20 @@ template into projects created from it.
    `dendotai/stack` and re-point `origin`).
 2. Rename the placeholders. The init script takes named flags; the only required
    one is `--name`, given as the domain with dots→dashes (the repo-naming
-   convention, e.g. `muxa-io`, `targetlocked-com`). Everything else is derived
+   convention, e.g. `widget-io`, `acme-com`). Everything else is derived
    from it:
 
    ```bash
-   bun scripts/init.mjs --name targetlocked-com
-   #  → @targetlocked-com scope, targetlocked.com / dev.targetlocked.com domains,
-   #    targetlocked-com.internal dev host, targetlocked-com{,-dev,-prod} worker names
+   bun scripts/init.mjs --name acme-com
+   #  → @acme-com scope, acme.com / dev.acme.com domains,
+   #    acme-com.internal dev host, acme-com{,-dev,-prod} worker names
 
-   bun scripts/init.mjs --name targetlocked-com --dry-run   # preview, write nothing
+   bun scripts/init.mjs --name acme-com --dry-run   # preview, write nothing
    ```
 
    `--name` is the single token that flows everywhere (repo/package/scope/worker
    names). Override any derived value with its own flag — e.g. `--scope
-   targetlocked` for a shorter `@targetlocked/api`, or `--domain`/`--dev-domain`/
+   acme` for a shorter `@acme/api`, or `--domain`/`--dev-domain`/
    `--host`. The script rewrites the distinctive tokens and
    copies the `*.example` env files into place. It leaves display strings (the
    landing `<h1>`, the page `<title>`, this README) — `grep -rn '\bstack\b'` and

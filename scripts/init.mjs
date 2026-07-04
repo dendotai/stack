@@ -4,19 +4,19 @@
 //   bun scripts/init.mjs --name <domain-dashed> [overrides…]
 //
 // The only required flag is --name, given as the domain with dots→dashes (the
-// repo-naming convention: muxa-io, targetlocked-com). Everything else is derived
+// repo-naming convention: widget-io, acme-com). Everything else is derived
 // from it, and any derived value can be overridden with its own flag:
 //
-//   --name        targetlocked-com        (required) repo / package / worker name
-//   --domain      targetlocked.com        (derived: last "-" → ".")  prod custom domain
-//   --scope       targetlocked-com        (derived: same as --name)  @scope/ + host + env
-//   --dev-domain  dev.targetlocked.com    (derived: "dev." + domain) dev custom domain
-//   --host        targetlocked-com.internal (derived: scope + ".internal") devSite host
+//   --name        acme-com        (required) repo / package / worker name
+//   --domain      acme.com        (derived: last "-" → ".")  prod custom domain
+//   --scope       acme-com        (derived: same as --name)  @scope/ + host + env
+//   --dev-domain  dev.acme.com    (derived: "dev." + domain) dev custom domain
+//   --host        acme-com.internal (derived: scope + ".internal") devSite host
 //   --dry-run                             print what would change, write nothing
 //
 // e.g.
-//   bun scripts/init.mjs --name targetlocked-com
-//   bun scripts/init.mjs --name targetlocked-com --scope targetlocked  # shorter @targetlocked/api
+//   bun scripts/init.mjs --name acme-com
+//   bun scripts/init.mjs --name acme-com --scope acme  # shorter @acme/api
 //   bun scripts/init.mjs --name acme-app --domain acme.dev --scope acme
 //
 // Rewrites the template's placeholder tokens (below) and copies the gitignored
@@ -66,7 +66,7 @@ function parseFlags(argv) {
 const USAGE =
   "usage: bun scripts/init.mjs --name <domain-dashed> [--domain d] [--scope s] " +
   "[--dev-domain d] [--host h] [--dry-run]\n" +
-  "e.g.   bun scripts/init.mjs --name targetlocked-com";
+  "e.g.   bun scripts/init.mjs --name acme-com";
 
 const flags = parseFlags(process.argv.slice(2));
 const name = typeof flags.name === "string" ? flags.name : undefined;
@@ -76,9 +76,9 @@ if (!name) {
 }
 
 // Derive the rest from --name; each is overridable via its own flag.
-// Scope defaults to the full name for uniformity (@targetlocked-com/api), so
+// Scope defaults to the full name for uniformity (@acme-com/api), so
 // --name is the single token that flows everywhere. Pass --scope for a shorter
-// brand form (e.g. --scope targetlocked → @targetlocked/api).
+// brand form (e.g. --scope acme → @acme/api).
 const domain = flags.domain ?? name.replace(/-(?=[^-]+$)/, "."); // last "-" → "."
 const scope = flags.scope ?? name;
 const devDomain = flags["dev-domain"] ?? `dev.${domain}`;

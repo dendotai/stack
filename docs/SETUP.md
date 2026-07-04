@@ -11,13 +11,14 @@ the `dev` branch, `prod` (a.k.a. the GitHub `production` environment) from `main
 ## Prerequisites
 
 - **bun** ≥ 1.3.8 (`packageManager` in root `package.json`).
-- **[`muxa`](https://github.com/dendotai/muxa)** — the monorepo process runner the
-  root `dev` script uses (`muxa -s @stack/web dev web -s @stack/api dev convex`).
-  Install it globally (`bun add -g muxa`), or replace the `dev` script with any
-  parallel runner you prefer (e.g. run `bun --filter @stack/web dev` and
-  `cd packages/api && bunx convex dev` in two terminals).
-- **1Password CLI (`op`)** — recommended for piping secrets into GitHub without
-  printing them (see [Secrets & environments](#secrets--environments)).
+- **A monorepo process runner** for the root `dev` script, which uses `muxa`
+  (`muxa -s @stack/web dev web -s @stack/api dev convex`) to run web + Convex
+  with labeled output. If you don't have `muxa`, replace the `dev` script with
+  any parallel runner — or just run the two in separate terminals:
+  `bun --filter @stack/web dev` and `cd packages/api && bunx convex dev`.
+- **A password manager with a CLI** for piping secrets into GitHub without
+  printing them (examples below use the 1Password CLI `op`; see
+  [Secrets & environments](#secrets--environments)).
 - Accounts: Cloudflare, Convex, WorkOS, GitHub.
 
 ---
@@ -130,9 +131,9 @@ logs) and **Secrets** (masked). The names are **identical** across `dev` and
 
 How secrets are organized (the approach this stack uses in production):
 
-1. **Cross-project / shared infra secrets → a `den-ai` umbrella 1Password vault.**
-   Anything not tied to a single project (e.g. a Caddy root CA shared across all
-   projects).
+1. **Cross-project / shared infra secrets → a single umbrella vault** (one
+   password manager vault you keep across projects). Anything not tied to one
+   project — e.g. an account-level API credential reused everywhere.
 2. **Project secrets → the project's own vault, one item per environment** —
    `<project> dev` and `<project> prod`. **Not** a single combined doc with
    env-suffixed fields.
