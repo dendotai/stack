@@ -46,14 +46,16 @@ template into projects created from it.
 
    ```bash
    bun scripts/init.mjs --name targetlocked-com
-   #  → @targetlocked scope, targetlocked.com / dev.targetlocked.com domains,
-   #    targetlocked.internal dev host, targetlocked-com{,-dev,-prod} worker names
+   #  → @targetlocked-com scope, targetlocked.com / dev.targetlocked.com domains,
+   #    targetlocked-com.internal dev host, targetlocked-com{,-dev,-prod} worker names
 
    bun scripts/init.mjs --name targetlocked-com --dry-run   # preview, write nothing
    ```
 
-   Override any derived value with its own flag (`--domain`, `--scope`,
-   `--dev-domain`, `--host`). The script rewrites the distinctive tokens and
+   `--name` is the single token that flows everywhere (repo/package/scope/worker
+   names). Override any derived value with its own flag — e.g. `--scope
+   targetlocked` for a shorter `@targetlocked/api`, or `--domain`/`--dev-domain`/
+   `--host`. The script rewrites the distinctive tokens and
    copies the `*.example` env files into place. It leaves display strings (the
    landing `<h1>`, the page `<title>`, this README) — `grep -rn '\bstack\b'` and
    edit by taste.

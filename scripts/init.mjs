@@ -7,15 +7,16 @@
 // repo-naming convention: muxa-io, targetlocked-com). Everything else is derived
 // from it, and any derived value can be overridden with its own flag:
 //
-//   --name        targetlocked-com     (required) repo / package / worker name
-//   --domain      targetlocked.com     (derived: last "-" → ".")   prod custom domain
-//   --scope       targetlocked         (derived: domain minus TLD) @scope/ + host + env
-//   --dev-domain  dev.targetlocked.com (derived: "dev." + domain)  dev custom domain
-//   --host        targetlocked.internal(derived: scope + ".internal") devSite host
-//   --dry-run                          print what would change, write nothing
+//   --name        targetlocked-com        (required) repo / package / worker name
+//   --domain      targetlocked.com        (derived: last "-" → ".")  prod custom domain
+//   --scope       targetlocked-com        (derived: same as --name)  @scope/ + host + env
+//   --dev-domain  dev.targetlocked.com    (derived: "dev." + domain) dev custom domain
+//   --host        targetlocked-com.internal (derived: scope + ".internal") devSite host
+//   --dry-run                             print what would change, write nothing
 //
 // e.g.
 //   bun scripts/init.mjs --name targetlocked-com
+//   bun scripts/init.mjs --name targetlocked-com --scope targetlocked  # shorter @targetlocked/api
 //   bun scripts/init.mjs --name acme-app --domain acme.dev --scope acme
 //
 // Rewrites the template's placeholder tokens (below) and copies the gitignored
@@ -75,8 +76,11 @@ if (!name) {
 }
 
 // Derive the rest from --name; each is overridable via its own flag.
+// Scope defaults to the full name for uniformity (@targetlocked-com/api), so
+// --name is the single token that flows everywhere. Pass --scope for a shorter
+// brand form (e.g. --scope targetlocked → @targetlocked/api).
 const domain = flags.domain ?? name.replace(/-(?=[^-]+$)/, "."); // last "-" → "."
-const scope = flags.scope ?? domain.split(".").slice(0, -1).join("-"); // drop TLD
+const scope = flags.scope ?? name;
 const devDomain = flags["dev-domain"] ?? `dev.${domain}`;
 const host = flags.host ?? `${scope}.internal`;
 const baseEnv = `${scope.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_BASE_URL`;
