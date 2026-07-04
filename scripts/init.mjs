@@ -1,25 +1,35 @@
 #!/usr/bin/env bun
 // Initialize a new project from the `dendotai/stack` template.
 //
-//   bun scripts/init.mjs <project> <scope> <prod-domain> <dev-domain>
+//   bun scripts/init.mjs --name <domain-dashed> [overrides…]
+//
+// The only required flag is --name, given as the domain with dots→dashes (the
+// repo-naming convention: muxa-io, targetlocked-com). Everything else is derived
+// from it, and any derived value can be overridden with its own flag:
+//
+//   --name        targetlocked-com     (required) repo / package / worker name
+//   --domain      targetlocked.com     (derived: last "-" → ".")   prod custom domain
+//   --scope       targetlocked         (derived: domain minus TLD) @scope/ + host + env
+//   --dev-domain  dev.targetlocked.com (derived: "dev." + domain)  dev custom domain
+//   --host        targetlocked.internal(derived: scope + ".internal") devSite host
+//   --dry-run                          print what would change, write nothing
 //
 // e.g.
-//   bun scripts/init.mjs targetlocked targetlocked targetlocked.com dev.targetlocked.com
+//   bun scripts/init.mjs --name targetlocked-com
+//   bun scripts/init.mjs --name acme-app --domain acme.dev --scope acme
 //
-// Rewrites the template's placeholder tokens to your project's, and copies the
-// gitignored `*.example` env files into place for you to fill. It does NOT touch
-// VERSION or TEMPLATE_CHANGELOG.md — those record which template version you
-// started from, so future template updates can be applied (see README).
+// Rewrites the template's placeholder tokens (below) and copies the gitignored
+// `*.example` env files into place. It does NOT touch VERSION or
+// TEMPLATE_CHANGELOG.md — those record which template version you started from,
+// so future template updates can be applied (see README).
 //
-// Placeholder tokens replaced (machine-critical, distinctive so they don't
-// collide with "TanStack" etc.):
 //   @stack/            → @<scope>/            (workspace package scope)
 //   dev.stack.example  → <dev-domain>         (dev custom domain)
-//   stack.example      → <prod-domain>        (prod custom domain)
-//   stack.internal     → <project>.internal   (devSite host)
-//   "name": "stack"    → "name": "<project>"  (root package.json, wrangler.jsonc)
-//   stack-dev/-prod    → <project>-dev/-prod  (worker names)
-//   STACK_BASE_URL     → <PROJECT>_BASE_URL   (screenshot tooling env)
+//   stack.example      → <domain>             (prod custom domain)
+//   stack.internal     → <host>               (devSite host)
+//   "name": "stack"    → "name": "<name>"     (root package.json, wrangler.jsonc)
+//   stack-dev/-prod    → <name>-dev/-prod     (worker names)
+//   STACK_BASE_URL     → <SCOPE>_BASE_URL      (screenshot tooling env)
 //
 // Display strings (the landing <h1>, the <title>, README headings) are left for
 // you to edit by taste — `grep -rn '\bstack\b'` to find them.
@@ -34,14 +44,43 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 
-const [project, scope, prodDomain, devDomain] = process.argv.slice(2);
-if (!project || !scope || !prodDomain || !devDomain) {
-  console.error(
-    "usage: bun scripts/init.mjs <project> <scope> <prod-domain> <dev-domain>\n" +
-      "e.g.   bun scripts/init.mjs targetlocked targetlocked targetlocked.com dev.targetlocked.com",
-  );
+function parseFlags(argv) {
+  const out = {};
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (!arg.startsWith("--")) continue;
+    const body = arg.slice(2);
+    const eq = body.indexOf("=");
+    if (eq !== -1) {
+      out[body.slice(0, eq)] = body.slice(eq + 1);
+    } else if (i + 1 < argv.length && !argv[i + 1].startsWith("--")) {
+      out[body] = argv[++i];
+    } else {
+      out[body] = true; // boolean flag, e.g. --dry-run
+    }
+  }
+  return out;
+}
+
+const USAGE =
+  "usage: bun scripts/init.mjs --name <domain-dashed> [--domain d] [--scope s] " +
+  "[--dev-domain d] [--host h] [--dry-run]\n" +
+  "e.g.   bun scripts/init.mjs --name targetlocked-com";
+
+const flags = parseFlags(process.argv.slice(2));
+const name = typeof flags.name === "string" ? flags.name : undefined;
+if (!name) {
+  console.error(USAGE);
   process.exit(1);
 }
+
+// Derive the rest from --name; each is overridable via its own flag.
+const domain = flags.domain ?? name.replace(/-(?=[^-]+$)/, "."); // last "-" → "."
+const scope = flags.scope ?? domain.split(".").slice(0, -1).join("-"); // drop TLD
+const devDomain = flags["dev-domain"] ?? `dev.${domain}`;
+const host = flags.host ?? `${scope}.internal`;
+const baseEnv = `${scope.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_BASE_URL`;
+const dryRun = flags["dry-run"] === true;
 
 const ROOT = new URL("..", import.meta.url).pathname;
 const SKIP_DIRS = new Set([".git", "node_modules", "dist", ".wrangler", ".tanstack", ".auth"]);
@@ -51,13 +90,26 @@ const SKIP_DIRS = new Set([".git", "node_modules", "dist", ".wrangler", ".tansta
 const REPLACEMENTS = [
   ["@stack/", `@${scope}/`],
   ["dev.stack.example", devDomain],
-  ["stack.example", prodDomain],
-  ["stack.internal", `${project}.internal`],
-  [`"name": "stack"`, `"name": "${project}"`],
-  ["stack-dev", `${project}-dev`],
-  ["stack-prod", `${project}-prod`],
-  ["STACK_BASE_URL", `${project.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_BASE_URL`],
+  ["stack.example", domain],
+  ["stack.internal", host],
+  [`"name": "stack"`, `"name": "${name}"`],
+  ["stack-dev", `${name}-dev`],
+  ["stack-prod", `${name}-prod`],
+  ["STACK_BASE_URL", baseEnv],
 ];
+
+console.log("\n  Resolved config:");
+for (const [label, value] of [
+  ["name", name],
+  ["scope", `@${scope}`],
+  ["domain", domain],
+  ["dev-domain", devDomain],
+  ["host", host],
+  ["base-url env", baseEnv],
+]) {
+  console.log(`    ${label.padEnd(13)} ${value}`);
+}
+console.log(dryRun ? "  (dry run — nothing written)\n" : "");
 
 function* walk(dir) {
   for (const entry of readdirSync(dir)) {
@@ -81,26 +133,32 @@ for (const file of walk(ROOT)) {
   let next = text;
   for (const [from, to] of REPLACEMENTS) next = next.split(from).join(to);
   if (next !== text) {
-    writeFileSync(file, next);
+    if (dryRun) console.log(`  · would rewrite ${file.replace(ROOT, "")}`);
+    else writeFileSync(file, next);
     changed++;
   }
 }
 
-// Copy the gitignored env templates into place (don't overwrite real ones).
-for (const ex of [
-  "apps/web/.dev.vars.example",
-  "apps/web/.env.local.example",
-  "packages/api/.env.local.example",
-]) {
-  const dest = join(ROOT, ex.replace(/\.example$/, ""));
-  const src = join(ROOT, ex);
-  if (existsSync(src) && !existsSync(dest)) {
-    copyFileSync(src, dest);
-    console.log(`  · created ${dest.replace(ROOT, "")} (fill it in)`);
+if (!dryRun) {
+  // Copy the gitignored env templates into place (don't overwrite real ones).
+  for (const ex of [
+    "apps/web/.dev.vars.example",
+    "apps/web/.env.local.example",
+    "packages/api/.env.local.example",
+  ]) {
+    const dest = join(ROOT, ex.replace(/\.example$/, ""));
+    const src = join(ROOT, ex);
+    if (existsSync(src) && !existsSync(dest)) {
+      copyFileSync(src, dest);
+      console.log(`  · created ${dest.replace(ROOT, "")} (fill it in)`);
+    }
   }
 }
 
-console.log(`\n  ✓ rewrote ${changed} files for "${project}" (@${scope}, ${prodDomain})`);
+console.log(
+  `\n  ${dryRun ? "would rewrite" : "✓ rewrote"} ${changed} files for "${name}" (@${scope}, ${domain})`,
+);
+if (dryRun) process.exit(0);
 console.log("\n  Next:");
 console.log("   1. Edit display strings: grep -rn '\\bstack\\b' --exclude-dir=node_modules .");
 console.log("   2. bun install");

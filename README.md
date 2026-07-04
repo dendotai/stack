@@ -39,22 +39,27 @@ template into projects created from it.
 
 1. On GitHub, click **Use this template** → create your repo (or clone
    `dendotai/stack` and re-point `origin`).
-2. Rename the placeholders. Run the init script:
+2. Rename the placeholders. The init script takes named flags; the only required
+   one is `--name`, given as the domain with dots→dashes (the repo-naming
+   convention, e.g. `muxa-io`, `targetlocked-com`). Everything else is derived
+   from it:
 
    ```bash
-   bun scripts/init.mjs <project> <scope> <prod-domain> <dev-domain>
-   # e.g.
-   bun scripts/init.mjs targetlocked targetlocked targetlocked.com dev.targetlocked.com
+   bun scripts/init.mjs --name targetlocked-com
+   #  → @targetlocked scope, targetlocked.com / dev.targetlocked.com domains,
+   #    targetlocked.internal dev host, targetlocked-com{,-dev,-prod} worker names
+
+   bun scripts/init.mjs --name targetlocked-com --dry-run   # preview, write nothing
    ```
 
-   It rewrites the distinctive tokens (`@stack/` scope, `stack.example` /
-   `dev.stack.example` domains, `stack.internal` dev host, the wrangler/worker
-   names, `STACK_BASE_URL`) and copies the `*.example` env files into place. It
-   leaves display strings (the landing `<h1>`, the page `<title>`, this README) —
-   `grep -rn '\bstack\b'` and edit by taste.
+   Override any derived value with its own flag (`--domain`, `--scope`,
+   `--dev-domain`, `--host`). The script rewrites the distinctive tokens and
+   copies the `*.example` env files into place. It leaves display strings (the
+   landing `<h1>`, the page `<title>`, this README) — `grep -rn '\bstack\b'` and
+   edit by taste.
 
-   > Prefer to do it by hand? The same token list is documented at the top of
-   > `scripts/init.mjs`.
+   > Prefer to do it by hand? The full flag list + token mapping is documented at
+   > the top of `scripts/init.mjs`.
 
 3. `bun install`.
 4. Provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.
