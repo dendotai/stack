@@ -6,8 +6,8 @@ Cloudflare, and the home of its future site and tooling.
 ```
 .
 ├── template/             # the starter — what a new project receives
-├── apps/                 # (future) marketing site
-├── packages/             # (future) bootstrap CLI
+├── apps/                 # (future) marketing site — this repo's own, not the starter's
+├── packages/             # (future) bootstrap CLI — same; the starter's apps/ and packages/ are under template/
 └── .github/workflows/    # this repo's own CI (runs the template's checks)
 ```
 
