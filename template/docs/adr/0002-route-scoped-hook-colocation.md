@@ -1,4 +1,4 @@
-# 0002. Route-scoped hook colocation under `routes/-hooks/`
+# 0002. Route-scoped hook colocation in a `-`-prefixed directory
 
 **Status:** Accepted
 
@@ -31,6 +31,10 @@ private helpers and types move into the same file; the route keeps only its
 render-path code and imports the hook.
 
 Scope rule: **route-only → `routes/-hooks/`; shared across routes → `lib/`.**
+
+> **Amended by [ADR 0005](0005-route-component-colocation.md).** The `-hooks/`
+> directory moved into the owning route's own folder — read the update note at
+> the end of this file before using the paths above.
 
 ## Consequences
 

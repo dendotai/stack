@@ -54,12 +54,12 @@ second consumer moves to `lib/`.
 ## Page layout
 
 Signed-in app routes (everything under `_app`, e.g. `/home`) render inside the
-**`_app` pathless layout route** (`src/routes/_app/route.tsx`) — the TanStack Router
-convention for a shared layout. It provides the frame
-(`<main>` + `container mx-auto px-4`) around `<Outlet/>`; routes just render their
-content. `TopNav` (`__root.tsx`) uses the same `container mx-auto px-4`, so nav
-and content stay aligned. Landing (`/`) and login render *outside* `_app`, so
-they keep their own full-screen layouts.
+**`_app` pathless layout route** (`src/routes/_app/route.tsx`) — the TanStack
+Router convention for a shared layout. It provides the frame (`<main>` +
+`container mx-auto px-4`) around `<Outlet/>`; routes just render their content.
+`TopNav` (`__root.tsx`) uses the same `container mx-auto px-4`, so nav and
+content stay aligned. Landing (`/`) and login render *outside* `_app`, so they
+keep their own full-screen layouts.
 
 The frame uses Tailwind's `container` composed inline (the documented idiom —
 `container` itself doesn't center or pad; don't override it globally). **To opt
