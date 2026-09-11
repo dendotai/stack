@@ -53,7 +53,13 @@ Auth is an HTTP protocol, so a router in `convex/http.ts` is the only way in.
 Everything else stays where #38 puts it: the web app proxies the auth path to
 this router on its own domain, and app-owned endpoints never land here. The
 convention's wording is therefore "**no app-owned endpoints on the Convex
-router**", and this router is not an exception to it.
+router**", and this router is not an exception to it. Today the routes come
+from the component's own `registerRoutes`, which also serves the root
+`/.well-known/openid-configuration` redirect Convex needs to resolve the
+issuer. The Google slice replaces that call with the same routes hand-rolled,
+because the Google redirect must be derived from the front that started the
+sign-in and the component builds auth without the request. Both shapes build
+auth once at push time.
 
 **Linking is gated on a verified email.** A new auth user links to an existing
 unlinked `users` row with the same email only when the identity provider
