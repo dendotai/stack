@@ -35,7 +35,10 @@ the `dev` branch, `prod` (a.k.a. the GitHub `production` environment) from `main
   - Account → Account Settings: **Read**
   - Zone → Workers Routes: **Edit** (your zone)
   - Zone → DNS: **Edit** (your zone)
-  - (Template "Edit Cloudflare Workers" + add the DNS scope.)
+  - Zone → Single Redirect: **Edit** (your zone) — for the local-callback hop in
+    [§3](#local-google-callbacks-the-cloudflare-redirect-hop). The dashboard picker calls it
+    "Single Redirect"; the docs call the product "Dynamic URL Redirect".
+  - (Template "Edit Cloudflare Workers" + add the DNS and Single Redirect scopes.)
   - Save the value → GitHub secret `CLOUDFLARE_API_TOKEN` (the same token works for both environments).
 
 ### Custom domains bind automatically
@@ -72,19 +75,95 @@ or `SITE_URL` fails outright, by design.
 | Variable | Value | Why |
 |---|---|---|
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32`, one per deployment | signs Better Auth sessions; split per env so a dev leak can't forge prod sessions |
-| `SITE_URL` | the web app's origin for that env (dev: `https://dev.<domain>` or `https://<project>.internal`, prod: `https://<domain>`) | Better Auth's `baseURL` — the origin its cookies and redirects are issued for |
+| `SITE_URL` | the web app's **deployed** origin for that env (dev: `https://dev.<domain>`, prod: `https://<domain>`) | Better Auth's `baseURL`. Exactly one origin; a second front goes in `AUTH_TRUSTED_ORIGINS` below |
 | `AUTH_DISABLE_SIGNUP` | `true` to close a deployment; unset while bootstrapping | refuses **new** email/password registrations and hides the form's create-account control; existing users keep signing in |
+| `GOOGLE_CLIENT_ID` | that environment's own OAuth client id ([§3](#3-google-sign-in)) | Google sign-in; required, so a push without it fails |
+| `GOOGLE_CLIENT_SECRET` | that environment's own OAuth client secret | as above |
+| `AUTH_TRUSTED_ORIGINS` | **dev only:** the local devsite origin, e.g. `https://<project>.internal`. Comma-separated for more than one. Prod lists none. | a front other than `SITE_URL` fails the CSRF origin check unless it is listed here |
+| `GOOGLE_REDIRECT_URI` | **dev only:** `https://internal.<domain>/api/auth/callback/google` ([§3](#local-google-callbacks-the-cloudflare-redirect-hop)) | the redirect a trusted front other than `SITE_URL` sends to Google; Google refuses a `.internal` URI, so the local front borrows the public hop host |
 
 ```bash
 cd packages/api
 bunx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
 bunx convex env set SITE_URL https://dev.<domain>
-# …and again with --prod using the prod values.
+bunx convex env set AUTH_TRUSTED_ORIGINS https://<project>.internal
+bunx convex env set GOOGLE_REDIRECT_URI https://internal.<domain>/api/auth/callback/google
+# …and again with --prod using the prod values, minus the two dev-only rows.
 ```
+
+**Both dev fronts run against the one dev deployment.** `SITE_URL` is the
+deployed dev host; the local devsite host reaches the same deployment through
+`AUTH_TRUSTED_ORIGINS`. Each sign-in returns to the front that started it: the
+deployment picks the Google redirect per request from the forwarded front host,
+and Better Auth's post-callback redirect is a path, which the browser resolves
+against whichever front it is on.
 
 ---
 
-## 3. GitHub environments (Variables vs Secrets)
+## 3. Google sign-in
+
+Google's consent screen names the OAuth client's project, so the project is the
+product's own — not a shared one, and not the hosting vendor's.
+
+**One Google Cloud project per product**, on the product owner's Google account:
+<https://console.cloud.google.com/> → new project, named after the product.
+
+**Consent screen** (APIs & Services → OAuth consent screen):
+
+- User type **External**, and **Publish** it. In testing mode only listed test
+  users can sign in, and their sessions expire in days.
+- **Default scopes only** (`email`, `profile`, `openid`). Anything else is a
+  sensitive or restricted scope and triggers Google's verification review.
+- **No logo.** Uploading one also triggers the review, for no functional gain.
+
+**One OAuth client per environment** (APIs & Services → Credentials → Create
+credentials → OAuth client ID → Web application). Two clients, so a leaked dev
+credential cannot reach prod sign-in.
+
+| Client | Authorized redirect URIs |
+|---|---|
+| `<product> dev` | `https://dev.<domain>/api/auth/callback/google` and `https://internal.<domain>/api/auth/callback/google` (the hop, below) |
+| `<product> prod` | `https://<domain>/api/auth/callback/google` |
+
+Each client's id and secret go to **that environment's Convex deployment** as
+`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` ([§2](#deployment-env-vars)), and to
+that environment's 1Password item under a `google`
+section ([Secrets & environments](#secrets--environments)).
+
+Registering several redirect URIs on one client is harmless. Which one is live
+is deployment config, not Google config.
+
+### Local Google callbacks: the Cloudflare redirect hop
+
+Google refuses a redirect URI on a non-public TLD, so the local devsite host
+(`https://<project>.internal`) cannot be registered. It does not have to be:
+Google never *contacts* the redirect URI, it only hands the browser a 302. So
+register a public hostname and have Cloudflare bounce the browser inward.
+
+1. **DNS** (your zone → DNS → Records): a **proxied** dummy record
+   `internal.<domain>`, type `AAAA`, value `100::`. Universal SSL covers
+   first-level subdomains, so it gets a certificate with no extra work. Put its
+   purpose in the record's **Comment** field: "OAuth redirect hop to the local
+   devsite (SETUP.md §3)".
+2. **Redirect rule** (your zone → Rules → Redirect Rules → Single Redirect):
+   - When `http.host eq "internal.<domain>"`
+   - Then a **dynamic** 302 to
+     `concat("https://<project>.internal", http.request.uri.path)`
+   - **Preserve query string: on** — the authorization code arrives in it.
+   - Name the rule for what it does: "OAuth redirect hop → local devsite".
+   The rule matches any path, so the hostname also serves anything else that
+   ever needs a public URL landing on local dev.
+3. **Token scope**: managing the rule from the API needs
+   Zone → Single Redirect: **Edit** ([§1](#1-cloudflare-account--domain)).
+
+The dev deployment then sends `https://internal.<domain>/api/auth/callback/google`
+to Google as the redirect for the local front (`GOOGLE_REDIRECT_URI`), and
+Cloudflare returns the browser to `https://<project>.internal/api/auth/callback/google`
+with the code intact.
+
+---
+
+## 4. GitHub environments (Variables vs Secrets)
 
 `deploy.yml` reads two kinds of config — **Variables** (non-secret, visible in
 logs) and **Secrets** (masked). The names are **identical** across `dev` and
@@ -115,7 +194,7 @@ and reads its own variables there ([§2](#deployment-env-vars)).
 
 ---
 
-## 4. Local dev secrets
+## 5. Local dev secrets
 
 - `cp apps/web/.dev.vars.example apps/web/.dev.vars` and fill with your **dev**
   values (`init.mjs` does this copy for you). Powers `bun dev` locally.
@@ -146,6 +225,9 @@ How secrets are organized (the approach this stack uses in production):
   a small `<project> shared` item for zero duplication.
 - **`convex / auth-secret` (the deployment's `BETTER_AUTH_SECRET`) is split
   per-env on purpose** so a dev leak can't forge prod sessions.
+- **A `google` section in each env item holds `client-id` and `client-secret`**
+  — that environment's own OAuth client ([§3](#3-google-sign-in)). Two clients,
+  two pairs of values, one pair per item; nothing is shared between them.
 - Everything else genuinely differs per env: Convex deployment/url/key, app
   site-url.
 
@@ -179,6 +261,9 @@ privilege.
 - **Sign out** ends the session and returns to the landing page.
 - The landing page loads for an anonymous visitor with no request to the auth
   path.
+- **Continue with Google** works on both dev fronts — `https://dev.<domain>` and
+  the local `https://<project>.internal` — and each returns to the front it
+  started on. Google's consent screen names the product.
 - Pushing to `main` deploys `https://<domain>` with the same flow.
 
 ---
@@ -197,17 +282,27 @@ Lessons from bringing this stack up in production — any new project will hit t
 2. **Convex env vars are per-deployment, and the auth setup reads them at push
    time.** `convex env set` defaults to the **dev** deployment — set prod
    explicitly (`--prod` or the dashboard) and **redeploy Convex** after any
-   change. `BETTER_AUTH_SECRET` and `SITE_URL` are per-deployment; a push
-   missing either fails outright. Full list: [§2](#deployment-env-vars).
+   change. `BETTER_AUTH_SECRET`, `SITE_URL`, `GOOGLE_CLIENT_ID` and
+   `GOOGLE_CLIENT_SECRET` are per-deployment; a push missing any of them fails
+   outright. Full list: [§2](#deployment-env-vars).
 
-3. **`SITE_URL` must be the origin the browser actually uses.** Better Auth
-   issues its cookies and redirects for that origin, so a deployment whose
-   `SITE_URL` names a different host than the front serving the form hands out
-   cookies the browser discards. A local devsite host and a deployed dev host
-   are two origins; one Convex deployment can only name one of them as
-   `SITE_URL`.
+3. **A second front needs `AUTH_TRUSTED_ORIGINS`, not a second `SITE_URL`.**
+   `SITE_URL` is one origin, and Better Auth rejects any other front's `Origin`
+   header unless it is listed in `AUTH_TRUSTED_ORIGINS`. Dev has two fronts —
+   the deployed dev host and the local devsite host — so the deployed one is
+   `SITE_URL` and the local one is the trusted origin. Prod has one front and
+   lists none.
 
-4. **GitHub Actions Variables vs Secrets are scoped per environment.** Identical
+4. **Prod's Google client is a promotion-time step, not a day-one one.** Create
+   the prod OAuth client, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` on the
+   prod deployment, and register `https://<domain>/api/auth/callback/google` as
+   its redirect URI **before the first `main` deploy** — the push fails without
+   the two variables. Nothing else about prod Google setup can be done earlier:
+   the redirect URI names the prod host. The hop from
+   [§3](#local-google-callbacks-the-cloudflare-redirect-hop) is dev-only; prod
+   registers one redirect URI and needs no `GOOGLE_REDIRECT_URI`.
+
+5. **GitHub Actions Variables vs Secrets are scoped per environment.** Identical
    names in `dev`/`production`; the job's `environment:` selects which resolve. Keep
    1Password as the source of truth and pipe `op read … | gh secret set …` so
    values never transit the terminal.

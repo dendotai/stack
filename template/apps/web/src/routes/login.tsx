@@ -65,6 +65,20 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
     window.location.href = returnPath;
   }
 
+  // Better Auth answers with a 302 to Google, so nothing here navigates: the
+  // browser leaves on its own and comes back to `callbackURL`. A path, not a
+  // URL, so the deployment returns the visitor to the front that started the
+  // sign-in — dev serves two of them against one deployment (ADR 0004).
+  async function onGoogle() {
+    setError(null);
+    setSubmitting(true);
+    const result = await authClient.signIn.social({ provider: "google", callbackURL: returnPath });
+    if (result.error) {
+      setError(result.error.message ?? "Google sign-in failed. Try again.");
+      setSubmitting(false);
+    }
+  }
+
   const submitLabel = mode === "signUp" ? "Create account" : "Sign in";
 
   return (
@@ -133,6 +147,21 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
             {submitLabel}
           </button>
         </form>
+
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          or
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <button
+          type="button"
+          onClick={onGoogle}
+          disabled={!hydrated || submitting}
+          className="w-full rounded-md border border-border px-3 py-2 text-sm font-medium disabled:opacity-50"
+        >
+          Continue with Google
+        </button>
 
         {canSignUp && (
           <button
