@@ -32,13 +32,10 @@ jobs:
       - name: Test
         run: bun run test
 
-      # Build verifies Vite + Wrangler config compile cleanly. The runtime
-      # values aren't validated, so stubs are fine — real values are bound
-      # at deploy time via deploy.yml.
+      # Build verifies Vite + Wrangler config compile cleanly. Auth needs no
+      # build-time value at all — it lives on the Convex deployment (ADR 0004) —
+      # so the only input is a placeholder Convex URL.
       - name: Build
         run: bun run build
         env:
           VITE_CONVEX_URL: https://example.convex.cloud
-          WORKOS_CLIENT_ID: stub
-          WORKOS_API_KEY: stub
-          WORKOS_COOKIE_PASSWORD: stubstubstubstubstubstubstubstub

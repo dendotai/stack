@@ -1,4 +1,4 @@
-// Headless screenshots of the dev app, reusing the saved WorkOS session.
+// Headless screenshots of the dev app, reusing the saved session.
 // Run `bun run auth:login` once first. See scripts/README.md for details.
 //
 //   bun run screenshots /home     # with args: capture only the route(s) you name
@@ -10,6 +10,7 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { isLoginUrl, signedInMarker } from "./selectors.mjs";
 
 const BASE = process.env.STACK_BASE_URL ?? "https://stack.internal";
 const STATE = fileURLToPath(new URL("../.auth/state.json", import.meta.url));
@@ -21,11 +22,6 @@ const DEFAULT_ROUTES = ["/home"];
 if (!existsSync(STATE)) {
   console.error("  No saved session at .auth/state.json — run: bun run auth:login");
   process.exit(1);
-}
-
-function isLoginUrl(url) {
-  const u = new URL(url);
-  return u.hostname.includes("authkit.app") || u.pathname.startsWith("/login");
 }
 
 function fileFor(route) {
@@ -53,9 +49,7 @@ async function capture(route) {
     );
     return false;
   }
-  await page
-    .locator('a[href="/logout"]')
-    .first()
+  await signedInMarker(page)
     .waitFor({ state: "visible", timeout: 15000 })
     .catch(() => {});
   await page.waitForLoadState("load").catch(() => {});

@@ -92,9 +92,9 @@ guarantee.
     `x-forwarded-host` as a deployment name and 404s. The web proxy strips the
     standard forwarded headers and carries the front's host and protocol in
     the component's own `x-better-auth-forwarded-*` headers instead.
-  - `get-convex/better-auth#420` — the React provider's client type does not
-    match the client the component's own helper builds. The web bridge carries
-    two documented casts until the types agree.
+  - `get-convex/better-auth#420` — the React provider's `AuthClient` type does
+    not match what `createAuthClient` returns for the same plugin set. The web
+    bridge carries a documented cast until the types agree.
 - **Coexistence path for a project with live vendor sessions:** the downstream
   project trusted three issuers at once during its migration — the component's
   plus both vendor issuers in `auth.config.ts` — and let the users trigger link

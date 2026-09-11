@@ -166,6 +166,6 @@ if (dryRun) process.exit(0);
 console.log("\n  Next:");
 console.log("   1. Edit display strings: grep -rn '\\bstack\\b' --exclude-dir=node_modules .");
 console.log("   2. bun install");
-console.log("   3. Follow docs/SETUP.md to provision Cloudflare / Convex / WorkOS / GitHub.");
+console.log("   3. Follow docs/SETUP.md to provision Cloudflare / Convex / GitHub.");
 console.log("   4. Fill the .dev.vars / .env.local files this script created.");
 console.log("   5. cd packages/api && bunx convex dev   (links your dev deployment)\n");

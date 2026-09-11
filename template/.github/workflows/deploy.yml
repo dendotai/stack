@@ -74,15 +74,9 @@ jobs:
           workingDirectory: apps/web
           wranglerVersion: "4"
           command: deploy
+          # The worker holds no auth secrets: Better Auth runs on the Convex
+          # deployment and reads its own variables there (ADR 0004).
           secrets: |
-            WORKOS_API_KEY
-            WORKOS_CLIENT_ID
-            WORKOS_COOKIE_PASSWORD
-            WORKOS_REDIRECT_URI
             CONVEX_URL
         env:
-          WORKOS_API_KEY: ${{ secrets.WORKOS_API_KEY }}
-          WORKOS_CLIENT_ID: ${{ secrets.WORKOS_CLIENT_ID }}
-          WORKOS_COOKIE_PASSWORD: ${{ secrets.WORKOS_COOKIE_PASSWORD }}
-          WORKOS_REDIRECT_URI: ${{ vars.WORKOS_REDIRECT_URI }}
           CONVEX_URL: ${{ vars.CONVEX_URL }}
