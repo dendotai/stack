@@ -13,6 +13,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/), semver. Each entry says
 **what changed** and, when an update isn't a clean file copy, **how to apply it**
 to an existing project (the manual steps an agent should take).
 
+## [Unreleased]
+
+- **Repo layout:** the template now lives in `template/` of `dendotai/stack`;
+  the repo root is an outer monorepo for the site and tooling. Nothing in the
+  template tree changed, and file paths in the entries below stay relative to
+  the template (i.e. to `template/` in the source repo). Copy `template/` out
+  to start a project; GitHub's "Use this template" button is gone.
+
 ## [1.0.0] — 2026-06-26
 
 Initial extraction from a production app running on this stack. A minimal,

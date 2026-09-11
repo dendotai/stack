@@ -2,29 +2,18 @@ name: CI
 
 on:
   pull_request:
-    paths:
-      - "template/**"
-      - ".github/workflows/ci.yml"
   push:
     branches: [main, dev]
-    paths:
-      - "template/**"
-      - ".github/workflows/ci.yml"
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Checks the template exactly as a downstream project's CI would
-# (template/.github/workflows/ci.yml), from inside template/.
 jobs:
   check:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    defaults:
-      run:
-        working-directory: template
     steps:
       - uses: actions/checkout@v6
 
@@ -44,7 +33,8 @@ jobs:
         run: bun run test
 
       # Build verifies Vite + Wrangler config compile cleanly. The runtime
-      # values aren't validated, so stubs are fine.
+      # values aren't validated, so stubs are fine — real values are bound
+      # at deploy time via deploy.yml.
       - name: Build
         run: bun run build
         env:
