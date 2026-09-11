@@ -49,9 +49,8 @@ The test is whether a careful reader would actually be unsure without the commen
 ## Tests
 
 Fixture people are `Ada` / `ada@example.com` — reuse that identity wherever a
-test needs a named user. Never a real person's name: a repo can go public, and
-real-looking names read as real data in a diff. Role fixtures that aren't people
-(`skel@example.com`, `e2e@example.com`) keep their own names.
+test needs a named user. Role fixtures that aren't people (`skel@example.com`,
+`e2e@example.com`) keep their own names.
 
 ## Commands
 
