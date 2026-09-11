@@ -1,101 +1,39 @@
 # stack
 
-A minimal, **production-verified** starter for full-stack apps on this stack:
-
-- **Monorepo** — [bun](https://bun.sh) workspaces (`apps/*`, `packages/*`), [Biome](https://biomejs.dev) for lint/format.
-- **Web** (`apps/web`) — [TanStack Start](https://tanstack.com/start) on **Cloudflare Workers** ([`@cloudflare/vite-plugin`](https://developers.cloudflare.com/workers/vite-plugin/)), Tailwind v4 + shadcn/ui, reads via [`@convex-dev/react-query`](https://github.com/get-convex/convex-react-query).
-- **Backend** (`packages/api`) — [Convex](https://convex.dev) (dev + prod deployments).
-- **Auth** — [WorkOS AuthKit](https://workos.com/docs/authkit) hosted login (`@workos/authkit-tanstack-react-start`).
-- **CI/CD** — GitHub Actions: PR checks + push-to-deploy (`dev` → dev env, `main` → prod).
-- **Mobile** — `apps/mobile/` is a README-only placeholder for a future Expo app.
-
-This is a **runnable app**, not a `{{mustache}}` skeleton: `/` landing, WorkOS
-sign-in, and a placeholder signed-in `/home` route that reads the current user
-(`Hello, {name}`) — demonstrating the authed read path end-to-end. Build your app
-by replacing `/home`.
-
-The template is **versioned** (see [`VERSION`](VERSION) +
-[`TEMPLATE_CHANGELOG.md`](TEMPLATE_CHANGELOG.md)) so improvements can flow from the
-template into projects created from it.
-
-## Layout
+Starter template for full-stack apps on TanStack Start + Convex + WorkOS on
+Cloudflare, and the home of its future site and tooling.
 
 ```
 .
-├── apps/
-│   ├── web/              # TanStack Start + Cloudflare Workers
-│   └── mobile/           # placeholder for Expo (README only)
-├── packages/
-│   └── api/              # Convex schema + functions + generated client (@stack/api)
-├── docs/
-│   ├── SETUP.md          # external setup: Cloudflare, Convex, WorkOS, GitHub, secrets
-│   └── adr/              # architecture decision records
-├── .github/workflows/    # ci.yml (checks) + deploy.yml (push-to-deploy)
-├── VERSION               # template version this tree is at
-└── TEMPLATE_CHANGELOG.md # what changed between template versions
+├── template/             # the starter — what a new project receives
+├── apps/                 # (future) marketing site
+├── packages/             # (future) bootstrap CLI
+└── .github/workflows/    # this repo's own CI (runs the template's checks)
 ```
 
-## Creating a project from this template
+`template/` is a complete, runnable bun monorepo with its own lockfile and
+workflows. See [`template/README.md`](template/README.md) for what is in it and
+how to develop, deploy and update a project.
 
-1. On GitHub, click **Use this template** → create your repo (or clone
-   `dendotai/stack` and re-point `origin`).
-2. Rename the placeholders. The init script takes named flags; the only required
-   one is `--name`, given as the domain with dots→dashes (the repo-naming
-   convention, e.g. `widget-io`, `acme-com`). Everything else is derived
-   from it:
+## Start a project
 
-   ```bash
-   bun scripts/init.mjs --name acme-com
-   #  → @acme-com scope, acme.com / dev.acme.com domains,
-   #    acme-com.internal dev host, acme-com{,-dev,-prod} worker names
-
-   bun scripts/init.mjs --name acme-com --dry-run   # preview, write nothing
-   ```
-
-   `--name` is the single token that flows everywhere (repo/package/scope/worker
-   names). Override any derived value with its own flag — e.g. `--scope
-   acme` for a shorter `@acme/api`, or `--domain`/`--dev-domain`/
-   `--host`. The script rewrites the distinctive tokens and
-   copies the `*.example` env files into place. It leaves display strings (the
-   landing `<h1>`, the page `<title>`, this README) — `grep -rn '\bstack\b'` and
-   edit by taste.
-
-   > Prefer to do it by hand? The full flag list + token mapping is documented at
-   > the top of `scripts/init.mjs`.
-
-3. `bun install`.
-4. Provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.
-5. Fill the `.dev.vars` / `.env.local` files the script created, then
-   `cd packages/api && bunx convex dev` once to link your dev deployment.
-
-## Develop
+There is no "Use this template" button: it would copy this whole repo, not the
+starter. Until the bootstrap CLI exists, copy the directory out yourself, or ask
+an agent to:
 
 ```bash
-bun run dev        # web (:3000) + convex, in parallel — needs the `muxa` runner (see SETUP)
-bun run check      # lint + typecheck + test (mirrors CI)
-bun run build      # build every workspace
+bunx giget gh:dendotai/stack/template my-app   # copies template/ into ./my-app
+cd my-app
+bun scripts/init.mjs --name my-app             # rename placeholders; --dry-run to preview
 ```
 
-Each workspace's scripts are documented in its own README / `package.json`.
+Then follow [`template/README.md` → Setup](template/README.md#setup).
 
-## Deploy
+## Develop the template
 
-Push to `dev` → deploys to the dev environment; push to `main` → prod. The
-pipeline (`.github/workflows/deploy.yml`) deploys Convex first, then builds and
-deploys the Worker, reading per-environment GitHub **Variables** and **Secrets**.
-See [docs/SETUP.md](docs/SETUP.md) for the one-time provisioning.
+```bash
+bun run check        # lint + typecheck + test inside template/ (mirrors CI)
+```
 
-## Updating a project from the template
-
-The template evolves; pull its improvements without a hard fork:
-
-1. Check your project's current template version in [`VERSION`](VERSION).
-2. Read [`TEMPLATE_CHANGELOG.md`](TEMPLATE_CHANGELOG.md) in the **latest** template
-   for every entry **newer** than that version. Each entry says what changed and,
-   when it isn't a clean file copy, how to apply it.
-3. Apply those changes to your project (this is designed to be agent-driven —
-   point your agent at the two changelogs and the template repo).
-4. Bump your project's `VERSION` to the version you applied up to.
-
-Because the template stays a real, runnable app, you can also just diff specific
-files against `dendotai/stack` when you want a single improvement.
+The template is versioned: [`template/VERSION`](template/VERSION) and
+[`template/TEMPLATE_CHANGELOG.md`](template/TEMPLATE_CHANGELOG.md).
