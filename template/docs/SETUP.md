@@ -62,6 +62,26 @@ its DNS. Subdomains (`dev.<domain>`) are usually clean; see
 - Locally: `cd packages/api && bunx convex dev` does an interactive browser login
   and links your dev deployment (no key stored locally).
 
+### Deployment env vars
+
+Better Auth runs inside the Convex deployment ([ADR 0004](adr/0004-identity-plane-better-auth-in-convex.md)),
+so its config is **per Convex deployment**, not a Worker secret. Set these on
+**each** deployment before the first push — a push missing `BETTER_AUTH_SECRET`
+or `SITE_URL` fails outright, by design.
+
+| Variable | Value | Why |
+|---|---|---|
+| `BETTER_AUTH_SECRET` | `openssl rand -base64 32`, one per deployment | signs Better Auth sessions; split per env so a dev leak can't forge prod sessions |
+| `SITE_URL` | the web app's origin for that env (dev: `https://dev.<domain>` or `https://<project>.internal`, prod: `https://<domain>`) | Better Auth's `baseURL` — the origin its cookies and redirects are issued for |
+| `AUTH_DISABLE_SIGNUP` | `true` to close a deployment; unset while bootstrapping | refuses **new** email/password registrations and hides the form's create-account control; existing users keep signing in |
+
+```bash
+cd packages/api
+bunx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
+bunx convex env set SITE_URL https://dev.<domain>
+# …and again with --prod using the prod values.
+```
+
 ---
 
 ## 3. WorkOS (two environments)
@@ -78,10 +98,6 @@ its DNS. Subdomains (`dev.<domain>`) are usually clean; see
 - `WORKOS_COOKIE_PASSWORD` — generate one per env: `openssl rand -base64 32`.
   Split per-env on purpose (a dev leak can't forge prod sessions).
 - **Prod needs your own Google OAuth app** — see [gotcha #3](#prod-cutover-gotchas).
-
-> The Convex side verifies these tokens via `auth.config.ts`, which is keyed on
-> `WORKOS_CLIENT_ID`. That variable must be set **on the Convex deployment** too —
-> see [gotcha #2](#prod-cutover-gotchas).
 
 ---
 
@@ -146,7 +162,8 @@ How secrets are organized (the approach this stack uses in production):
 - **Genuinely account-level fields** (`cloudflare account-id`, `cloudflare api token`)
   are either duplicated into both env items (low-churn, the default) or pulled into
   a small `<project> shared` item for zero duplication.
-- **`workos cookie-password` is split per-env on purpose** so a dev leak can't
+- **`convex / auth-secret` (the deployment's `BETTER_AUTH_SECRET`) and
+  `workos cookie-password` are split per-env on purpose** so a dev leak can't
   forge prod sessions.
 - Everything else genuinely differs per env: Convex deployment/url/key, WorkOS
   client-id/api-key/redirect-uri, app site-url.
@@ -161,6 +178,8 @@ no chance of grabbing a dev value for prod, and prod keeps its blast-radius isol
 ```bash
 op read "op://<project> dev/convex/deploy key" | gh secret set CONVEX_DEPLOY_KEY --env dev
 op read "op://<project> prod/workos/api key"   | gh secret set WORKOS_API_KEY    --env production
+# Convex deployment variables go to the deployment, not to GitHub:
+op read "op://<project> prod/convex/auth-secret" | xargs bunx convex env set --prod BETTER_AUTH_SECRET
 # variables are not secret:
 gh variable set CONVEX_URL --env production --body "https://<prod>.convex.cloud"
 ```
@@ -191,12 +210,11 @@ Lessons from bringing this stack up in production — any new project will hit t
    CNAMEs + parking A records). Delete them, then re-deploy — Cloudflare creates
    the proxied binding + TLS automatically. Subdomains (`dev.`) are usually clean.
 
-2. **Convex env vars are per-deployment, and `auth.config.ts` bakes them at deploy
+2. **Convex env vars are per-deployment, and the auth setup reads them at push
    time.** `convex env set` defaults to the **dev** deployment — set prod
-   explicitly (dashboard or targeted) and **redeploy Convex** after any change.
-   `auth.config.ts` is keyed entirely on `WORKOS_CLIENT_ID`; a wrong value (e.g.
-   pasting the Convex deployment id instead of the WorkOS `client_…`) →
-   `NoAuthProvider`.
+   explicitly (`--prod` or the dashboard) and **redeploy Convex** after any
+   change. `BETTER_AUTH_SECRET` and `SITE_URL` are per-deployment; a push
+   missing either fails outright. Full list: [§2](#deployment-env-vars).
 
 3. **WorkOS prod needs your own Google OAuth app.** Sandbox uses WorkOS's shared
    demo Google creds; prod requires your own Google Cloud OAuth client. The
@@ -205,12 +223,7 @@ Lessons from bringing this stack up in production — any new project will hit t
    (`openid`/`email`/`profile`) and don't return Google tokens → avoids Google's
    verification review.
 
-4. **First login during any auth misconfig leaves no `users` row.**
-   `users.getOrCreate` runs in the login callback; if it failed, the session still
-   works for reads (`authedQuery` tolerates a null user) but every `authedMutation`
-   throws "User not found". Fix: **log out and back in** once the config is corrected.
-
-5. **GitHub Actions Variables vs Secrets are scoped per environment.** Identical
+4. **GitHub Actions Variables vs Secrets are scoped per environment.** Identical
    names in `dev`/`production`; the job's `environment:` selects which resolve. Keep
    1Password as the source of truth and pipe `op read … | gh secret set …` so
    values never transit the terminal.
