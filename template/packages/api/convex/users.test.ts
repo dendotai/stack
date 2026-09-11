@@ -45,8 +45,8 @@ test("a verified-email auth user links to the existing users row by email", asyn
   const t = convexTest(schema, modules);
   const existingId = await t.run(async (ctx) => {
     return await ctx.db.insert("users", {
-      email: "den@example.com",
-      name: "Den",
+      email: "ada@example.com",
+      name: "Ada",
       createdAt: 1,
     });
   });
@@ -54,8 +54,8 @@ test("a verified-email auth user links to the existing users row by email", asyn
   await t.run(async (ctx) => {
     await createFromAuthUser(ctx, {
       _id: "auth_1",
-      email: "den@example.com",
-      name: "Den",
+      email: "ada@example.com",
+      name: "Ada",
       emailVerified: true,
     });
   });
@@ -65,7 +65,7 @@ test("a verified-email auth user links to the existing users row by email", asyn
   expect(rows[0]).toMatchObject({
     _id: existingId,
     authUserId: "auth_1",
-    email: "den@example.com",
+    email: "ada@example.com",
   });
 });
 
@@ -76,8 +76,8 @@ test("an unverified-email auth user gets a new row even when the email matches",
   const t = convexTest(schema, modules);
   const existingId = await t.run(async (ctx) => {
     return await ctx.db.insert("users", {
-      email: "den@example.com",
-      name: "Den",
+      email: "ada@example.com",
+      name: "Ada",
       createdAt: 1,
     });
   });
@@ -85,7 +85,7 @@ test("an unverified-email auth user gets a new row even when the email matches",
   await t.run(async (ctx) => {
     await createFromAuthUser(ctx, {
       _id: "auth_2",
-      email: "den@example.com",
+      email: "ada@example.com",
       name: "Impostor",
       emailVerified: false,
     });
@@ -104,7 +104,7 @@ test("a verified-email auth user never re-links a row that already has an authUs
   await t.run(async (ctx) => {
     await ctx.db.insert("users", {
       authUserId: "auth_taken",
-      email: "den@example.com",
+      email: "ada@example.com",
       name: "Old",
       createdAt: 1,
     });
@@ -113,8 +113,8 @@ test("a verified-email auth user never re-links a row that already has an authUs
   await t.run(async (ctx) => {
     await createFromAuthUser(ctx, {
       _id: "auth_new",
-      email: "den@example.com",
-      name: "Den",
+      email: "ada@example.com",
+      name: "Ada",
       emailVerified: true,
     });
   });
@@ -122,5 +122,5 @@ test("a verified-email auth user never re-links a row that already has an authUs
   const rows = await t.run(async (ctx) => await ctx.db.query("users").collect());
   expect(rows).toHaveLength(2);
   expect(rows.find((row) => row.authUserId === "auth_taken")?.name).toBe("Old");
-  expect(rows.find((row) => row.authUserId === "auth_new")?.name).toBe("Den");
+  expect(rows.find((row) => row.authUserId === "auth_new")?.name).toBe("Ada");
 });
