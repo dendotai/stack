@@ -1,24 +1,10 @@
-// WorkOS AuthKit access tokens carry one of two `iss` values depending on flow,
-// so register both. JWKS URL is non-OIDC-standard (per-client), so use customJwt
-// with explicit `jwks` instead of relying on .well-known discovery.
-declare const process: { env: Record<string, string | undefined> };
+import { getAuthConfigProvider } from "@convex-dev/better-auth/auth-config";
+import type { AuthConfig } from "convex/server";
 
-const clientId = process.env.WORKOS_CLIENT_ID;
-
+// Exactly one trusted issuer: the Better Auth component's (ADR 0004). The
+// component's `convex` plugin finds its provider by `applicationID === "convex"`
+// and throws when more than one matches, so no provider added here may reuse
+// that applicationID.
 export default {
-  providers: [
-    {
-      type: "customJwt" as const,
-      issuer: "https://api.workos.com/",
-      algorithm: "RS256",
-      jwks: `https://api.workos.com/sso/jwks/${clientId}`,
-      applicationID: clientId,
-    },
-    {
-      type: "customJwt" as const,
-      issuer: `https://api.workos.com/user_management/${clientId}`,
-      algorithm: "RS256",
-      jwks: `https://api.workos.com/sso/jwks/${clientId}`,
-    },
-  ],
-};
+  providers: [getAuthConfigProvider()],
+} satisfies AuthConfig;
