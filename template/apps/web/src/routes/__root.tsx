@@ -26,7 +26,9 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     if (!sessionToken && !isPublicPath(location.pathname)) {
       throw redirect({
         to: "/login",
-        search: { returnPathname: location.pathname },
+        // `href`, not `pathname`: a deep link's query string is part of the
+        // page the visitor asked for.
+        search: { returnPathname: location.href },
       });
     }
     // Lets route loaders prefetch auth-protected Convex queries during server

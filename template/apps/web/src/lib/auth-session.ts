@@ -1,20 +1,19 @@
 import { getToken } from "@convex-dev/better-auth/utils";
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeaders } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import { getSessionCookie } from "better-auth/cookies";
+import { forwardToConvexSite } from "./auth-forward";
 import { convexSiteUrl } from "./convex";
 
 // Exchanges the Better Auth session cookie for the JWT Convex validates. Runs
 // on the server because only the server sees that cookie: it is HttpOnly.
 const fetchSessionToken = createServerFn({ method: "GET" }).handler(
   async (): Promise<string | null> => {
-    const headers = new Headers(getRequestHeaders());
+    const request = getRequest();
     // Without a session cookie the endpoint can only answer "no session", so an
     // anonymous visitor must not pay the round trip to the deployment.
-    if (!getSessionCookie(headers)) return null;
-    headers.delete("content-length");
-    headers.delete("transfer-encoding");
-    headers.set("accept-encoding", "identity");
+    if (!getSessionCookie(request.headers)) return null;
+    const headers = forwardToConvexSite(request.headers, new URL(request.url));
     const { token } = await getToken(convexSiteUrl, headers);
     return token ?? null;
   },

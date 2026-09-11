@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { forwardToConvexSite } from "../../../lib/auth-forward";
 import { convexSiteUrl } from "../../../lib/convex";
 
 // Better Auth serves its endpoints from the Convex deployment's HTTP router
@@ -6,32 +7,10 @@ import { convexSiteUrl } from "../../../lib/convex";
 // cookies are first-party and the browser never leaves the project's domain.
 async function proxy({ request }: { request: Request }): Promise<Response> {
   const url = new URL(request.url);
-  const headers = new Headers(request.headers);
-
-  // Hop-by-hop headers describe the inbound connection; forwarding them makes
-  // the outbound fetch reject the body.
-  headers.delete("connection");
-  headers.delete("content-length");
-  headers.delete("transfer-encoding");
-
-  // get-convex/better-auth#424: Convex's edge reads a foreign
-  // `x-forwarded-host` as a deployment name and answers 404, so the front's
-  // host and protocol travel in the component's own headers instead. Delete
-  // this block when that issue closes.
-  headers.delete("forwarded");
-  headers.delete("x-forwarded-host");
-  headers.delete("x-forwarded-proto");
-  headers.set("x-better-auth-forwarded-host", url.host);
-  headers.set("x-better-auth-forwarded-proto", url.protocol.replace(/:$/, ""));
-
-  headers.set("host", new URL(convexSiteUrl).host);
-  // An encoded response would reach the browser with the header the runtime
-  // already stripped while decoding it.
-  headers.set("accept-encoding", "identity");
 
   return await fetch(`${convexSiteUrl}${url.pathname}${url.search}`, {
     method: request.method,
-    headers,
+    headers: forwardToConvexSite(request.headers, url),
     body: request.body,
     // Better Auth's OAuth endpoints answer with 302s the browser must follow
     // itself, so the proxy passes them through rather than chasing them.

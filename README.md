@@ -1,7 +1,7 @@
 # stack
 
-Starter template for full-stack apps on TanStack Start + Convex + WorkOS on
-Cloudflare, and the home of its future site and tooling.
+Starter template for full-stack apps on TanStack Start + Convex + Better Auth
+on Cloudflare, and the home of its future site and tooling.
 
 ```
 .

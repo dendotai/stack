@@ -35,7 +35,10 @@ afterEach(cleanup);
 // submission. These two properties of the *server-rendered* markup are what
 // keep a password out of the URL in that window.
 test("server-renders a POST form whose submit is disabled", () => {
-  const dom = new DOMParser().parseFromString(renderToString(<LoginPage />), "text/html");
+  const dom = new DOMParser().parseFromString(
+    renderToString(<LoginPage returnPath="/home" />),
+    "text/html",
+  );
   expect(dom.querySelector("form")?.getAttribute("method")).toBe("post");
   expect(dom.querySelector('button[type="submit"]')?.hasAttribute("disabled")).toBe(true);
 });
@@ -44,7 +47,7 @@ test("renders the rejection message in an alert", async () => {
   state.signIn.mockResolvedValue({ error: { message: "Invalid email or password" } });
   const user = userEvent.setup();
 
-  render(<LoginPage />);
+  render(<LoginPage returnPath="/home" />);
   await user.type(screen.getByLabelText("Email"), "ada@example.com");
   await user.type(screen.getByLabelText("Password"), "wrong-password");
   await user.click(screen.getByRole("button", { name: "Sign in" }));
@@ -54,23 +57,23 @@ test("renders the rejection message in an alert", async () => {
 
 test("shows the sign-up control only once the flag says sign-up is open", () => {
   state.signUpDisabled = undefined;
-  render(<LoginPage />);
+  render(<LoginPage returnPath="/home" />);
   expect(screen.queryByRole("button", { name: "Sign up" })).not.toBeInTheDocument();
 
   cleanup();
   state.signUpDisabled = true;
-  render(<LoginPage />);
+  render(<LoginPage returnPath="/home" />);
   expect(screen.queryByRole("button", { name: "Sign up" })).not.toBeInTheDocument();
 
   cleanup();
   state.signUpDisabled = false;
-  render(<LoginPage />);
+  render(<LoginPage returnPath="/home" />);
   expect(screen.getByRole("button", { name: "Sign up" })).toBeInTheDocument();
 });
 
 test("the sign-up control switches the form to creating an account", async () => {
   const user = userEvent.setup();
-  render(<LoginPage />);
+  render(<LoginPage returnPath="/home" />);
 
   await user.click(screen.getByRole("button", { name: "Sign up" }));
 

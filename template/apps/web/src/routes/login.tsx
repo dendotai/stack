@@ -20,13 +20,14 @@ function LoginRoute() {
 
 type Mode = "signIn" | "signUp";
 
-export function LoginPage({ returnPath = "/home" }: { returnPath?: string }) {
+export function LoginPage({ returnPath }: { returnPath: string }) {
   // Server render and first client render must agree, so this starts false and
   // flips in a mount effect. Until it flips, every submit control is disabled:
   // before hydration the browser runs the form's own submission, and a password
   // in a GET query string lands in history, the Referer header and access logs
   // (#28). `method="post"` below is the backstop for whatever still slips
-  // through, e.g. implicit submission with Enter.
+  // through, e.g. implicit submission with Enter. Any social sign-in button
+  // added to this page takes the same flag.
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
 
@@ -54,7 +55,7 @@ export function LoginPage({ returnPath = "/home" }: { returnPath?: string }) {
         : await authClient.signIn.email({ email, password });
 
     if (result.error) {
-      setError(result.error.message ?? "Sign-in failed. Check your email and password.");
+      setError(result.error.message ?? "Something went wrong. Check your details and try again.");
       setSubmitting(false);
       return;
     }

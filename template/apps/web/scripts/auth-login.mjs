@@ -45,6 +45,10 @@ const headed = process.env.HEADED === "1" || !automated;
 // The form's submit stays disabled until the page hydrates, so that transition
 // is the signal that a click will reach the handler rather than the browser's
 // own submission (#28).
+//
+// `click()` waits for the same thing on its own. This loop exists only for the
+// message: a hydration failure otherwise reads as a generic click timeout, and
+// that misdiagnosis is exactly what #30 is about.
 async function waitForEnabled(locator, timeout = 30000) {
   await locator.waitFor({ state: "visible", timeout });
   const deadline = Date.now() + timeout;

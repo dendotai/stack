@@ -16,7 +16,10 @@ export function isLoginUrl(url) {
   return new URL(url).pathname.startsWith(LOGIN_PATH);
 }
 
-const never = () => new Promise(() => {});
+// A losing branch of the race must not reject: its rejection would surface as
+// an unhandled one after the race has already settled. Hanging forever instead
+// lets the winner decide the outcome.
+const loseRace = () => new Promise(() => {});
 
 // Races the marker against the form's error alert, so rejected credentials
 // report their message at once instead of burning the whole timeout. A timeout
@@ -27,11 +30,11 @@ export async function waitForSignedIn(page, { timeout = 60000, raceAlert = true 
   const outcomes = [
     signedInMarker(page)
       .waitFor({ state: "visible", timeout })
-      .then(() => "signed-in", never),
+      .then(() => "signed-in", loseRace),
     page.waitForTimeout(timeout).then(() => "timeout"),
   ];
   if (raceAlert) {
-    outcomes.push(alert.waitFor({ state: "visible", timeout }).then(() => "rejected", never));
+    outcomes.push(alert.waitFor({ state: "visible", timeout }).then(() => "rejected", loseRace));
   }
 
   const outcome = await Promise.race(outcomes);
