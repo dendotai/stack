@@ -10,8 +10,8 @@ A minimal, **production-verified** starter for full-stack apps on this stack:
 - **Mobile** — `apps/mobile/` is a README-only placeholder for a future Expo app.
 
 This is a **runnable app**, not a `{{mustache}}` skeleton: `/` landing, a
-sign-in form served by the app itself (email and password, or Google), and a placeholder
-signed-in `/home` route that reads the current user (`Hello, {name}`) —
+sign-in form served by the app itself (email and password, or Google), and a
+placeholder signed-in `/home` route that reads the current user (`Hello, {name}`) —
 demonstrating the authed read path end-to-end. Build your app by replacing
 `/home`.
 

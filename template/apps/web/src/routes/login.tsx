@@ -69,7 +69,7 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
   // browser leaves on its own and comes back to `callbackURL`. A path, not a
   // URL, so the deployment returns the visitor to the front that started the
   // sign-in — dev serves two of them against one deployment (ADR 0004).
-  async function onGoogle() {
+  async function onGoogleSignIn() {
     setError(null);
     setSubmitting(true);
     const result = await authClient.signIn.social({ provider: "google", callbackURL: returnPath });
@@ -156,7 +156,7 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
 
         <button
           type="button"
-          onClick={onGoogle}
+          onClick={onGoogleSignIn}
           disabled={!hydrated || submitting}
           className="w-full rounded-md border border-border px-3 py-2 text-sm font-medium disabled:opacity-50"
         >

@@ -65,21 +65,17 @@ const trustedOrigins = (): string[] =>
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-const GOOGLE_CALLBACK_PATH = "/api/auth/callback/google";
+// Better Auth's own default, named here because http.ts routes it and the
+// Google callback hangs off it.
+export const AUTH_BASE_PATH = "/api/auth";
+
+const GOOGLE_CALLBACK_PATH = `${AUTH_BASE_PATH}/callback/google`;
 
 const siteOrigin = () => new URL(required("SITE_URL")).origin;
 
 /**
  * The `redirect_uri` Google is told to send the browser back to, for the front
- * that started this sign-in. Google refuses a redirect URI on a non-public TLD,
- * so the local devsite front cannot name itself; `GOOGLE_REDIRECT_URI` names a
- * public hop host instead, which Cloudflare 302s back to the devsite with the
- * path and query intact (docs/SETUP.md §3).
- *
- * A front that this deployment does not already trust gets the base URL's
- * callback, never its own: the value travels to Google as `redirect_uri`, so an
- * unchecked forwarded host would let a caller aim the authorization code at a
- * host of its choosing.
+ * that started this sign-in.
  *
  * @param front - origin of the front that started the sign-in, from the
  *   forwarded headers the web proxy sets; `undefined` when a request arrives
@@ -87,9 +83,23 @@ const siteOrigin = () => new URL(required("SITE_URL")).origin;
  */
 export function googleRedirectURI(front: string | undefined): string {
   const base = siteOrigin();
-  if (!front || front === base || !trustedOrigins().includes(front)) {
-    return `${base}${GOOGLE_CALLBACK_PATH}`;
-  }
+
+  // The base front can always name itself, so the override below is never its
+  // business — not even when a deployment also lists it as a trusted origin.
+  if (!front || front === base) return `${base}${GOOGLE_CALLBACK_PATH}`;
+
+  // A front this deployment does not trust never chooses the redirect: the
+  // value travels to Google as `redirect_uri` and decides where the
+  // authorization code is delivered, so an unchecked forwarded host would let a
+  // caller aim the code at a host of its choosing.
+  if (!trustedOrigins().includes(front)) return `${base}${GOOGLE_CALLBACK_PATH}`;
+
+  // Google refuses a redirect URI on a non-public TLD, so the local devsite
+  // front cannot name itself. `GOOGLE_REDIRECT_URI` names a public hop host
+  // instead, which Cloudflare 302s back to the devsite with the path and query
+  // intact (docs/SETUP.md §3). One value covers every trusted front, so a
+  // deployment that trusts a second *public* front leaves it unset and lets
+  // each front name itself.
   return process.env.GOOGLE_REDIRECT_URI ?? `${front}${GOOGLE_CALLBACK_PATH}`;
 }
 

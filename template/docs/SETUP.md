@@ -69,8 +69,9 @@ its DNS. Subdomains (`dev.<domain>`) are usually clean; see
 
 Better Auth runs inside the Convex deployment ([ADR 0004](adr/0004-identity-plane-better-auth-in-convex.md)),
 so its config is **per Convex deployment**, not a Worker secret. Set these on
-**each** deployment before the first push — a push missing `BETTER_AUTH_SECRET`
-or `SITE_URL` fails outright, by design.
+**each** deployment before the first push — a push missing any of the four
+required ones fails outright, by design: `BETTER_AUTH_SECRET`, `SITE_URL`,
+`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
 
 | Variable | Value | Why |
 |---|---|---|
@@ -80,15 +81,25 @@ or `SITE_URL` fails outright, by design.
 | `GOOGLE_CLIENT_ID` | that environment's own OAuth client id ([§3](#3-google-sign-in)) | Google sign-in; required, so a push without it fails |
 | `GOOGLE_CLIENT_SECRET` | that environment's own OAuth client secret | as above |
 | `AUTH_TRUSTED_ORIGINS` | **dev only:** the local devsite origin, e.g. `https://<project>.internal`. Comma-separated for more than one. Prod lists none. | a front other than `SITE_URL` fails the CSRF origin check unless it is listed here |
-| `GOOGLE_REDIRECT_URI` | **dev only:** `https://internal.<domain>/api/auth/callback/google` ([§3](#local-google-callbacks-the-cloudflare-redirect-hop)) | the redirect a trusted front other than `SITE_URL` sends to Google; Google refuses a `.internal` URI, so the local front borrows the public hop host |
+| `GOOGLE_REDIRECT_URI` | **dev only:** `https://internal.<domain>/api/auth/callback/google` ([§3](#local-google-callbacks-the-cloudflare-redirect-hop)) | the redirect **every** trusted front other than `SITE_URL` sends to Google; Google refuses a `.internal` URI, so the local front borrows the public hop host |
+
+**`GOOGLE_REDIRECT_URI` is one value for all of them.** A deployment that
+trusts a second *public* front should register that front's own callback on its
+Google client and leave `GOOGLE_REDIRECT_URI` unset — set, it would send that
+front's sign-in through the hop and land the visitor on the devsite instead.
+Set it only while exactly one trusted front cannot name itself.
 
 ```bash
 cd packages/api
 bunx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
 bunx convex env set SITE_URL https://dev.<domain>
+bunx convex env set GOOGLE_CLIENT_ID <the dev client id>
+bunx convex env set GOOGLE_CLIENT_SECRET <the dev client secret>
 bunx convex env set AUTH_TRUSTED_ORIGINS https://<project>.internal
 bunx convex env set GOOGLE_REDIRECT_URI https://internal.<domain>/api/auth/callback/google
 # …and again with --prod using the prod values, minus the two dev-only rows.
+# Pipe the secret from your password manager rather than typing it — see
+# Secrets & environments below.
 ```
 
 **Both dev fronts run against the one dev deployment.** `SITE_URL` is the

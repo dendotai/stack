@@ -77,9 +77,6 @@ test("shows the sign-up control only once the flag says sign-up is open", () => 
   expect(screen.getByRole("button", { name: "Sign up" })).toBeInTheDocument();
 });
 
-// The return path is the whole reason the button passes a `callbackURL`: it is
-// what sends the visitor back to the front that started the sign-in, at the
-// page they asked for.
 test("the Google button starts the social sign-in with the return path", async () => {
   const user = userEvent.setup();
   render(<LoginPage returnPath="/home/settings" />);
