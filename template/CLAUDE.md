@@ -46,6 +46,13 @@ A *why* still has to clear that bar: if the reason is already evident from the
 code (e.g. `Pick<Doc<…>>` plainly being a narrowing), stating it adds nothing.
 The test is whether a careful reader would actually be unsure without the comment.
 
+## Tests
+
+Fixture people are `Ada` / `ada@example.com` — reuse that identity wherever a
+test needs a named user. Never a real person's name: a repo can go public, and
+real-looking names read as real data in a diff. Role fixtures that aren't people
+(`skel@example.com`, `e2e@example.com`) keep their own names.
+
 ## Commands
 
 Document every `package.json` script in the nearest README: one concise line on
