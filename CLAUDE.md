@@ -22,6 +22,16 @@ Ask: does a downstream project need this file? Yes → under `template/`
 (fixes and features of the starter, its docs, ADRs, SETUP.md, its workflows).
 No → at the root (repo tooling, the site, the CLI, this repo's CI).
 
+## The template is never deployed from this repo
+
+It has no cloud Convex project, no Cloudflare Worker, and no GitHub
+environment secrets, and none may be created for it. A change that needs a
+running Convex backend (routes, components, push-time checks, codegen) uses
+a local anonymous deployment: `CONVEX_AGENT_MODE=anonymous bunx convex dev`
+inside `template/packages/api`, then `bunx convex env set` for the variables
+in `template/docs/SETUP.md`. Acceptance passes run against that. "Deployed"
+is proven by downstream products, not here.
+
 ## Reading issues
 
 Issues filed before 2026-09-11 predate the move: the template was the repo
