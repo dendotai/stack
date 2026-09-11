@@ -62,6 +62,10 @@ bun run build      # build every workspace
 
 Each workspace's scripts are documented in its own README / `package.json`.
 
+`@biomejs/biome` is pinned exactly: `biome.json` declares the schema of that
+version, and a newer CLI reports a mismatch. When you bump the pin, run
+`bunx biome migrate --write` in the same commit.
+
 ## Deploy
 
 Push to `dev` → deploys to the dev environment; push to `main` → prod. The
