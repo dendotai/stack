@@ -43,7 +43,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 
 function parseFlags(argv) {
   const out = {};
@@ -86,7 +86,7 @@ const host = flags.host ?? `${scope}.internal`;
 const baseEnv = `${scope.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_BASE_URL`;
 const dryRun = flags["dry-run"] === true;
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = join(__dirname, "..");
 const SKIP_DIRS = new Set([".git", "node_modules", "dist", ".wrangler", ".tanstack", ".auth"]);
 
 // Order matters: dev.stack.example before stack.example; the scope before the
@@ -137,7 +137,7 @@ for (const file of walk(ROOT)) {
   let next = text;
   for (const [from, to] of REPLACEMENTS) next = next.split(from).join(to);
   if (next !== text) {
-    if (dryRun) console.log(`  · would rewrite ${file.replace(ROOT, "")}`);
+    if (dryRun) console.log(`  · would rewrite ${relative(ROOT, file)}`);
     else writeFileSync(file, next);
     changed++;
   }
@@ -154,7 +154,7 @@ if (!dryRun) {
     const src = join(ROOT, ex);
     if (existsSync(src) && !existsSync(dest)) {
       copyFileSync(src, dest);
-      console.log(`  · created ${dest.replace(ROOT, "")} (fill it in)`);
+      console.log(`  · created ${relative(ROOT, dest)} (fill it in)`);
     }
   }
 }
