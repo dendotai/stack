@@ -29,6 +29,11 @@ TanStack Start from code-splitting the route's render path, so the component
 stays in the eager bundle. Type exports are fine — they are erased. See
 [ADR 0005](../../docs/adr/0005-route-component-colocation.md).
 
+`src/routes.test.ts` enforces this: it parses every file under `routes/` and
+fails unless the file's value exports are exactly `Route`. It skips `-` prefixed
+names (ADR 0002) and whatever `routeFileIgnorePattern` in `tsr.config.json`
+ignores, so its scan cannot drift from the generated route tree.
+
 The component lives in a `-components/` directory beside the route file. A
 route that owns a second file (a test, a hook) gets its own directory:
 
