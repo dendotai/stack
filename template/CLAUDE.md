@@ -1,3 +1,18 @@
+## This project started from a template
+
+This repo was created from the `dendotai/stack` template. Parts of it are
+template code, not code written for this project: the auth flow, the deploy
+workflows, `docs/SETUP.md`, the CI checks.
+
+When template code does not work, is wrong, or is missing a step, fix it here
+**and** report it upstream with `gh issue create --repo dendotai/stack`. Give
+the symptom, the file, what you expected, and what happened. Without that
+report every other project built from the template hits the same defect.
+
+`dendotai/stack` is public and this repo may not be. Never name this repo, its
+hosts, or any other private detail in an upstream issue — describe the case
+generically.
+
 This project uses [Convex](https://convex.dev) as its backend.
 
 **Convex backend** rules + agent skills live in `packages/api/CLAUDE.md` and

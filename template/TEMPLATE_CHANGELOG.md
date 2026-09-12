@@ -15,6 +15,13 @@ to an existing project (the manual steps an agent should take).
 
 ## [Unreleased]
 
+- **Report template defects upstream** (`CLAUDE.md`): a new top section tells an
+  agent working in a downstream project which parts of the repo are template
+  code, to file what it finds with `gh issue create --repo dendotai/stack`, and
+  to keep every private detail out of that issue. A defect found downstream is a
+  defect in every project built from the template. To apply: copy the first
+  section of `CLAUDE.md`.
+
 - **Google sign-in on the project's own OAuth clients** (`packages/api`,
   `apps/web`, [ADR 0004](docs/adr/0004-identity-plane-better-auth-in-convex.md)):
   `convex/auth.ts` enables the Google social provider from `GOOGLE_CLIENT_ID`
