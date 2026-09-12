@@ -80,6 +80,7 @@ routes/_app/
   (nothing stops an import of `-components/home`). The `-` prefix marks it as
   route-private by convention, not by the compiler. If a second route needs it,
   promote it to `src/components/` — same rule ADR 0002 gives for hooks.
-- **Open:** nothing enforces the single-value-export rule yet. A lint rule over
-  `routes/**` would; until then the loss is silent, so check the client chunk
-  list when adding a route.
+- **Enforced:** `apps/web/src/routes.test.ts` parses every route file with the
+  TypeScript compiler API and fails when a file has a value export other than
+  `Route`. It runs under `bun run test`, so CI catches the regression that is
+  otherwise silent. The folder half of this ADR is still convention only.
