@@ -1,6 +1,6 @@
 import type { ConvexQueryClient } from "@convex-dev/react-query";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import type { QueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   HeadContent,
@@ -9,13 +9,10 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { getAuth } from "@workos/authkit-tanstack-react-start";
-import { AuthKitProvider, useAuth } from "@workos/authkit-tanstack-react-start/client";
-import { ConvexProviderWithAuth } from "convex/react";
-
-import { useAuthFromAuthKit } from "../lib/auth-bridge";
+import { ConvexAuthProvider } from "../lib/auth-bridge";
+import { authClient } from "../lib/auth-client";
 import { isPublicPath } from "../lib/auth-gate";
-import { convex } from "../lib/convex";
+import { getSessionToken } from "../lib/auth-session";
 import appCss from "../styles.css?url";
 
 export interface RouterAppContext {
@@ -25,19 +22,21 @@ export interface RouterAppContext {
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   beforeLoad: async ({ context, location }) => {
-    if (isPublicPath(location.pathname)) return;
-    const auth = await getAuth();
-    if (!auth.user) {
+    const sessionToken = await getSessionToken();
+    if (!sessionToken && !isPublicPath(location.pathname)) {
       throw redirect({
         to: "/login",
-        search: { returnPathname: location.pathname },
+        // `href`, not `pathname`: a deep link's query string is part of the
+        // page the visitor asked for.
+        search: { returnPathname: location.href },
       });
     }
-    // Attach the WorkOS access token to the SSR HTTP client so route loaders
-    // can prefetch auth-protected Convex queries during server render. The
-    // serverHttpClient only exists on the server; on client-side navigations
-    // this is a no-op.
-    context.convexQueryClient.serverHttpClient?.setAuth(auth.accessToken);
+    // Lets route loaders prefetch auth-protected Convex queries during server
+    // render. The serverHttpClient only exists on the server; on client-side
+    // navigations this is a no-op.
+    if (sessionToken) context.convexQueryClient.serverHttpClient?.setAuth(sessionToken);
+    // Child routes read this instead of resolving the session a second time.
+    return { sessionToken };
   },
   head: () => ({
     meta: [
@@ -51,29 +50,28 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { sessionToken } = Route.useRouteContext();
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <AuthKitProvider>
-          <ConvexProviderWithAuth client={convex} useAuth={useAuthFromAuthKit}>
-            <TopNav />
-            {children}
-            {import.meta.env.DEV && (
-              <TanStackDevtools
-                config={{ position: "bottom-right" }}
-                plugins={[
-                  {
-                    name: "TanStack Router",
-                    render: <TanStackRouterDevtoolsPanel />,
-                  },
-                ]}
-              />
-            )}
-          </ConvexProviderWithAuth>
-        </AuthKitProvider>
+        <ConvexAuthProvider initialToken={sessionToken}>
+          <TopNav />
+          {children}
+          {import.meta.env.DEV && (
+            <TanStackDevtools
+              config={{ position: "bottom-right" }}
+              plugins={[
+                {
+                  name: "TanStack Router",
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          )}
+        </ConvexAuthProvider>
         <Scripts />
       </body>
     </html>
@@ -87,11 +85,16 @@ const NAV_LINKS: readonly NavLink[] = [
   { to: "/home", label: "Home", auth: "in" },
 ];
 
+// Signed-in state comes from the root route's context, not from the auth
+// client's session hook: the server already resolved it, so the nav renders
+// correctly in the first byte and an anonymous visitor makes no auth request.
+// Both sign-in and sign-out navigate the whole document, so it never goes stale.
 function TopNav() {
-  const { loading, user } = useAuth();
+  const { sessionToken } = Route.useRouteContext();
+  const signedIn = sessionToken !== null;
   const visible = NAV_LINKS.filter((link) => {
     if (link.auth === "any") return true;
-    return link.auth === "in" ? !!user : !user;
+    return link.auth === "in" ? signedIn : !signedIn;
   });
 
   // Same `container mx-auto px-4` as page content → nav and content stay aligned.
@@ -113,10 +116,8 @@ function TopNav() {
           </Link>
         ))}
         <div className="ml-auto">
-          {loading ? null : user ? (
-            <a href="/logout" className="text-muted-foreground hover:text-foreground">
-              Sign out
-            </a>
+          {signedIn ? (
+            <SignOutButton />
           ) : (
             <a href="/login" className="text-muted-foreground hover:text-foreground">
               Sign in
@@ -125,5 +126,29 @@ function TopNav() {
         </div>
       </div>
     </nav>
+  );
+}
+
+// A button, not a link: signing out is an action, and a GET-navigable `/logout`
+// is something a browser or a link prefetch can fire on its own. Its role and
+// name are also the signed-in marker the screenshot scripts look for
+// (`scripts/selectors.mjs`).
+function SignOutButton() {
+  const queryClient = useQueryClient();
+  return (
+    <button
+      type="button"
+      className="text-muted-foreground hover:text-foreground"
+      onClick={async () => {
+        await authClient.signOut();
+        // The cache holds the signed-out user's rows; a persister would keep
+        // them on disk for the next visitor on this device.
+        queryClient.clear();
+        // Full navigation so the root route re-resolves the session server-side.
+        window.location.href = "/";
+      }}
+    >
+      Sign out
+    </button>
   );
 }

@@ -31,18 +31,6 @@ export default defineConfig({
     },
   },
   resolve: { tsconfigPaths: true },
-  // TanStack Start ≥1.134.7 has a regression that bundles server-only modules
-  // into the client (TanStack/router#5738, workos/authkit-tanstack-start#18).
-  // Forcing the WorkOS packages through Vite's dep optimizer makes esbuild
-  // bundle their CJS transitive deps (eventemitter3) with proper ESM interop,
-  // sidestepping the broken default-export resolution in raw browser ESM.
-  // Remove once the upstream regression is fixed.
-  optimizeDeps: {
-    include: [
-      "@workos/authkit-tanstack-react-start",
-      "@workos/authkit-tanstack-react-start/client",
-    ],
-  },
   plugins: [
     devtools(),
     cloudflare({ viteEnvironment: { name: "ssr" } }),

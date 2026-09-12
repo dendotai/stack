@@ -81,8 +81,12 @@ guarantee.
   project's domain; one vendor and four per-environment values drop out of
   provisioning; the app row is transactional with the auth user, so no
   protected function ever runs without one.
-- **Positive:** on a paid Convex plan the router can move to a custom domain
-  with no code change; nothing here assumes the `*.convex.site` host.
+- **Accepted trade-off:** the web app derives the router's host from
+  `VITE_CONVEX_URL` by the `.convex.cloud` → `.convex.site` swap, and takes no
+  second build variable, so a deployed build can never proxy auth to a
+  deployment it does not query. A paid plan's custom router domain breaks that
+  swap: `convexSiteUrl` in `apps/web/src/lib/convex.ts` is then the one line to
+  change, and both the proxy and the session lookup follow it.
 - **Accepted trade-off:** the auth path crosses two runtimes (Worker proxy →
   Convex router) on every request. The proxy is a few lines and the
   session lookup runs once per page load, gated on the presence of a cookie.
@@ -92,9 +96,9 @@ guarantee.
     `x-forwarded-host` as a deployment name and 404s. The web proxy strips the
     standard forwarded headers and carries the front's host and protocol in
     the component's own `x-better-auth-forwarded-*` headers instead.
-  - `get-convex/better-auth#420` — the React provider's client type does not
-    match the client the component's own helper builds. The web bridge carries
-    two documented casts until the types agree.
+  - `get-convex/better-auth#420` — the React provider's `AuthClient` type does
+    not match what `createAuthClient` returns for the same plugin set. The web
+    bridge carries a documented cast until the types agree.
 - **Coexistence path for a project with live vendor sessions:** the downstream
   project trusted three issuers at once during its migration — the component's
   plus both vendor issuers in `auth.config.ts` — and let the users trigger link

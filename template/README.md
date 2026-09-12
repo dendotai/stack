@@ -5,14 +5,15 @@ A minimal, **production-verified** starter for full-stack apps on this stack:
 - **Monorepo** — [bun](https://bun.sh) workspaces (`apps/*`, `packages/*`), [Biome](https://biomejs.dev) for lint/format.
 - **Web** (`apps/web`) — [TanStack Start](https://tanstack.com/start) on **Cloudflare Workers** ([`@cloudflare/vite-plugin`](https://developers.cloudflare.com/workers/vite-plugin/)), Tailwind v4 + shadcn/ui, reads via [`@convex-dev/react-query`](https://github.com/get-convex/convex-react-query).
 - **Backend** (`packages/api`) — [Convex](https://convex.dev) (dev + prod deployments).
-- **Auth** — [WorkOS AuthKit](https://workos.com/docs/authkit) hosted login (`@workos/authkit-tanstack-react-start`).
+- **Auth** — first-party login: [Better Auth](https://better-auth.com) inside the Convex deployment ([`@convex-dev/better-auth`](https://github.com/get-convex/better-auth)), the app's own form and its own domain ([ADR 0004](docs/adr/0004-identity-plane-better-auth-in-convex.md)).
 - **CI/CD** — GitHub Actions: PR checks + push-to-deploy (`dev` → dev env, `main` → prod).
 - **Mobile** — `apps/mobile/` is a README-only placeholder for a future Expo app.
 
-This is a **runnable app**, not a `{{mustache}}` skeleton: `/` landing, WorkOS
-sign-in, and a placeholder signed-in `/home` route that reads the current user
-(`Hello, {name}`) — demonstrating the authed read path end-to-end. Build your app
-by replacing `/home`.
+This is a **runnable app**, not a `{{mustache}}` skeleton: `/` landing, an
+email-and-password sign-in form served by the app itself, and a placeholder
+signed-in `/home` route that reads the current user (`Hello, {name}`) —
+demonstrating the authed read path end-to-end. Build your app by replacing
+`/home`.
 
 The template is **versioned** (see [`VERSION`](VERSION) +
 [`TEMPLATE_CHANGELOG.md`](TEMPLATE_CHANGELOG.md)) so improvements can flow from the
@@ -28,7 +29,7 @@ template into projects created from it.
 ├── packages/
 │   └── api/              # Convex schema + functions + generated client (@stack/api)
 ├── docs/
-│   ├── SETUP.md          # external setup: Cloudflare, Convex, WorkOS, GitHub, secrets
+│   ├── SETUP.md          # external setup: Cloudflare, Convex, GitHub, secrets
 │   └── adr/              # architecture decision records
 ├── .github/workflows/    # ci.yml (checks) + deploy.yml (push-to-deploy)
 ├── VERSION               # template version this tree is at
