@@ -5,9 +5,12 @@ template code, not code written for this project: the auth flow, the deploy
 workflows, `docs/SETUP.md`, the CI checks.
 
 When template code does not work, is wrong, or is missing a step, fix it here
-**and** report it upstream with `gh issue create --repo dendotai/stack`. Give
-the symptom, the file, what you expected, and what happened. Without that
-report every other project built from the template hits the same defect.
+**and** report it upstream. Search first —
+`gh issue list --repo dendotai/stack --state all --search "<keywords>"` — because
+another project built from the template probably hit the same defect; then file
+with `gh issue create --repo dendotai/stack`, giving the symptom, the file, what
+you expected, and what happened. Without that report every other project keeps
+hitting it.
 
 `dendotai/stack` is public and this repo may not be. Never name this repo, its
 hosts, or any other private detail in an upstream issue — describe the case

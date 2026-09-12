@@ -275,6 +275,20 @@ privilege.
 - **Continue with Google** works on both dev fronts — `https://dev.<domain>` and
   the local `https://<project>.internal` — and each returns to the front it
   started on. Google's consent screen names the product.
+- **The redirect each front sends to Google** is one the dev OAuth client
+  lists. Readable without a browser, from either front's origin:
+
+  ```bash
+  curl -s https://dev.<domain>/api/auth/sign-in/social \
+    -H 'content-type: application/json' \
+    -d '{"provider":"google","callbackURL":"/"}' |
+    jq -r .url | grep -o 'redirect_uri=[^&]*'
+  ```
+
+  `https://dev.<domain>` prints its own callback; the local
+  `https://<project>.internal` prints the hop host `internal.<domain>`
+  (percent-encoded in both cases). Google answers `redirect_uri_mismatch` for
+  any value the dev client does not list.
 - Pushing to `main` deploys `https://<domain>` with the same flow.
 
 ---
