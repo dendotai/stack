@@ -43,9 +43,9 @@ routes/_app/
     home.test.tsx               imports `./-components/home`
 ```
 
-Routes with no component (`login`, `logout` — server handlers) stay flat files
-with no `-components/`. Landing owns only its component, so it is a flat
-`index.tsx` plus `routes/-components/landing.tsx`. `__root.tsx` is the
+Routes with no component (`api/auth/$` — a server handler) stay flat files with
+no `-components/`. Landing owns only its component, so it is a flat `index.tsx`
+plus `routes/-components/landing.tsx`. `__root.tsx` is the
 exception: every page renders it, so its shell and nav stay inline.
 
 A component used by a second route moves to `src/components/`; a hook with a
@@ -109,8 +109,8 @@ Five seams carry it, and a change to one usually needs the others:
 **Any form that posts sensitive fields must repeat the login page's guard**: a
 `method="post"` on the form and a submit disabled until a mount effect marks
 hydration. Before hydration the browser runs its own submission, and a GET puts
-the field values in the URL. `routes/login.test.tsx` asserts both properties of
-the server-rendered markup.
+the field values in the URL. `routes/login/login.test.tsx` asserts both
+properties of the server-rendered markup.
 
 **Sign-in and sign-out do a full navigation** (`window.location.href`), not a
 router navigate: the root route resolves the session on the server, so the new

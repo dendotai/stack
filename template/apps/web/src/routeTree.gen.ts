@@ -9,13 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
+import { Route as LoginRouteRouteImport } from './routes/login/route'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppHomeRouteRouteImport } from './routes/_app/home/route'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
-const LoginRoute = LoginRouteImport.update({
+const LoginRouteRoute = LoginRouteRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
@@ -42,13 +42,13 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteRoute
   '/home': typeof AppHomeRouteRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteRoute
   '/home': typeof AppHomeRouteRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -56,7 +56,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteRouteWithChildren
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteRoute
   '/_app/home': typeof AppHomeRouteRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -71,7 +71,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRouteRoute: typeof AppRouteRouteWithChildren
-  LoginRoute: typeof LoginRoute
+  LoginRouteRoute: typeof LoginRouteRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -81,7 +81,7 @@ declare module '@tanstack/react-router' {
       id: '/login'
       path: '/login'
       fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+      preLoaderRoute: typeof LoginRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -130,7 +130,7 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRouteRoute: AppRouteRouteWithChildren,
-  LoginRoute: LoginRoute,
+  LoginRouteRoute: LoginRouteRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

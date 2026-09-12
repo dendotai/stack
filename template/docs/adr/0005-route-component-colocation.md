@@ -55,8 +55,8 @@ routes/_app/
   by `routeFileIgnorePattern: ".*\\.test\\.tsx?$"` in `tanstackStart()` — the
   generator otherwise warns once per build for every file under `routes/` that
   exports no `Route`.
-- A route with **no** component (a server handler like `/login`, or a plain
-  redirect) stays a single flat file with no `-components/` at all.
+- A route with **no** component (a server handler like `/api/auth/$`, or a
+  plain redirect) stays a single flat file with no `-components/` at all.
 - Landing is the one-file case: `index.tsx` plus
   `routes/-components/landing.tsx`. It gets a directory the day it gains a test.
 - Layout routes follow the same shape: `_app/route.tsx` +

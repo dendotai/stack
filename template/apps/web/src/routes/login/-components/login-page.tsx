@@ -1,22 +1,9 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@stack/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { authClient } from "../lib/auth-client";
-import { safeReturnPath } from "../lib/auth-gate";
 
-export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    returnPathname: typeof search.returnPathname === "string" ? search.returnPathname : undefined,
-  }),
-  component: LoginRoute,
-});
-
-function LoginRoute() {
-  const { returnPathname } = Route.useSearch();
-  return <LoginPage returnPath={safeReturnPath(returnPathname)} />;
-}
+import { authClient } from "../../../lib/auth-client";
 
 type Mode = "signIn" | "signUp";
 
