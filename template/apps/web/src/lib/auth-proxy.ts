@@ -5,10 +5,11 @@ import { convexSiteUrl } from "./convex";
 // (ADR 0004). This proxy puts all of them on the app's own origin, so session
 // cookies are first-party and the browser never leaves the project's domain.
 //
-// The target is a parameter and never a build variable, so a deployed app can
-// only proxy auth to the deployment it already queries. A project whose two
-// hosts don't follow the `.convex.cloud` → `.convex.site` swap passes its own
-// here; nothing reads one from the environment.
+// The target is an argument and never a build variable, so a deployed app can
+// only proxy auth to the deployment it already queries. To change it for good,
+// change `convexSiteUrl` itself: the session lookup reads that constant too,
+// and a proxy pointed somewhere the lookup isn't would sign a visitor in and
+// then render every page signed out.
 export function createAuthProxy(opts?: { convexSiteUrl: string }) {
   const target = opts?.convexSiteUrl ?? convexSiteUrl;
 

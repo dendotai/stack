@@ -25,6 +25,8 @@ function upstreamFor(pathname) {
 
 const server = Bun.serve({
   port,
+  // Loopback only. Behind this router sits an unauthenticated local backend.
+  hostname: "127.0.0.1",
   idleTimeout: 0,
   fetch(request, server) {
     const url = new URL(request.url);
@@ -67,13 +69,18 @@ const server = Bun.serve({
         ws.data.queue = [];
       });
       upstream.addEventListener("message", (event) => ws.send(event.data));
-      upstream.addEventListener("close", () => ws.close());
+      // Relay the code and reason: a backend restart must not reach the client
+      // as a clean shutdown, which it would reconnect from differently.
+      upstream.addEventListener("close", (event) => ws.close(event.code, event.reason));
       upstream.addEventListener("error", () => ws.close());
     },
     message(ws, message) {
       const upstream = ws.data.upstream;
       if (upstream?.readyState === WebSocket.OPEN) upstream.send(message);
-      else ws.data.queue.push(message);
+      // Only a socket still connecting will ever flush the queue. Once the
+      // upstream is closing, queueing would drop the frame in silence.
+      else if (upstream?.readyState === WebSocket.CONNECTING) ws.data.queue.push(message);
+      else ws.close();
     },
     close(ws) {
       ws.data.upstream?.close();

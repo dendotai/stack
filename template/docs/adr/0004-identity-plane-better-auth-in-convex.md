@@ -81,8 +81,12 @@ guarantee.
   project's domain; one vendor and four per-environment values drop out of
   provisioning; the app row is transactional with the auth user, so no
   protected function ever runs without one.
-- **Positive:** on a paid Convex plan the router can move to a custom domain
-  with no code change; nothing here assumes the `*.convex.site` host.
+- **Accepted trade-off:** the web app derives the router's host from
+  `VITE_CONVEX_URL` by the `.convex.cloud` → `.convex.site` swap, and takes no
+  second build variable, so a deployed build can never proxy auth to a
+  deployment it does not query. A paid plan's custom router domain breaks that
+  swap: `convexSiteUrl` in `apps/web/src/lib/convex.ts` is then the one line to
+  change, and both the proxy and the session lookup follow it.
 - **Accepted trade-off:** the auth path crosses two runtimes (Worker proxy →
   Convex router) on every request. The proxy is a few lines and the
   session lookup runs once per page load, gated on the presence of a cookie.
