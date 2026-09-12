@@ -5,8 +5,8 @@ on two environments (`dev` and `prod`). Do the sections in order; the last one
 (GitHub environments) wires everything together so CI/CD can deploy.
 
 Each environment is a full, isolated stack: its own Cloudflare Worker + custom
-domain, its own Convex deployment. `dev` deploys from
-the `dev` branch, `prod` (a.k.a. the GitHub `production` environment) from `main`.
+domain, its own Convex deployment. `dev` deploys from the `dev` branch, `prod`
+from `main`.
 
 ## Prerequisites
 
@@ -58,7 +58,7 @@ its DNS. Subdomains (`dev.<domain>`) are usually clean; see
 - Create a **production deployment** (project Settings → Production deployment).
 - Generate **deploy keys** for both (Settings → Deploy keys → New):
   - dev key → GitHub `dev` env secret `CONVEX_DEPLOY_KEY`.
-  - prod key → GitHub `production` env secret `CONVEX_DEPLOY_KEY`.
+  - prod key → GitHub `prod` env secret `CONVEX_DEPLOY_KEY`.
   - These are **deploy-only** (least privilege) — they exist so CI can run
     `convex deploy`, nothing more.
 - Note each deployment's **HTTPS URL** → GitHub variable `CONVEX_URL` (per env).
@@ -177,14 +177,13 @@ with the code intact.
 ## 4. GitHub environments (Variables vs Secrets)
 
 `deploy.yml` reads two kinds of config — **Variables** (non-secret, visible in
-logs) and **Secrets** (masked). The names are **identical** across `dev` and
-`production`; the workflow selects the right environment per branch
-(`main` → `production`, otherwise `dev`). Set both kinds on **each** environment
-(per-env, not repo-wide).
+logs) and **Secrets** (masked). The names are **identical** across `dev` and `prod`;
+the workflow selects the right environment per branch (`main` → `prod`, otherwise
+`dev`). Set both kinds on **each** environment (per-env, not repo-wide).
 
-- Repo → Settings → Environments → create **`dev`** and **`production`**.
-- On `production`, optionally enable **Required reviewers** (yourself) so prod
-  deploys need a click.
+- Repo → Settings → Environments → create **`dev`** and **`prod`**.
+- On `prod`, optionally enable **Required reviewers** (yourself) so prod deploys
+  need a click.
 
 **Variables** (Settings → Environments → `<env>` → Environment variables):
 
@@ -244,8 +243,8 @@ How secrets are organized (the approach this stack uses in production):
 
 **Why split per env:** the environment is the dominant axis (most fields differ
 dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub
-`production` environment ← `<project> prod` — so values copy straight across with
-no chance of grabbing a dev value for prod, and prod keeps its blast-radius isolation.
+`prod` environment ← `<project> prod` — so values copy straight across with no
+chance of grabbing a dev value for prod, and prod keeps its blast-radius isolation.
 
 **Never paste secret values through the terminal/agent.** Pipe from `op`:
 
@@ -254,7 +253,7 @@ op read "op://<project> dev/convex/deploy key" | gh secret set CONVEX_DEPLOY_KEY
 # Convex deployment variables go to the deployment, not to GitHub:
 op read "op://<project> prod/convex/auth-secret" | xargs bunx convex env set --prod BETTER_AUTH_SECRET
 # variables are not secret:
-gh variable set CONVEX_URL --env production --body "https://<prod>.convex.cloud"
+gh variable set CONVEX_URL --env prod --body "https://<prod>.convex.cloud"
 ```
 
 CI deploy keys are **deploy-only** (`deployment:deploy` scope for Convex), least
@@ -328,6 +327,6 @@ Lessons from bringing this stack up in production — any new project will hit t
    registers one redirect URI and needs no `GOOGLE_REDIRECT_URI`.
 
 5. **GitHub Actions Variables vs Secrets are scoped per environment.** Identical
-   names in `dev`/`production`; the job's `environment:` selects which resolve. Keep
+   names in `dev`/`prod`; the job's `environment:` selects which resolve. Keep
    1Password as the source of truth and pipe `op read … | gh secret set …` so
    values never transit the terminal.

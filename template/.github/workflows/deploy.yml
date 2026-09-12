@@ -27,13 +27,15 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'production' || 'dev' }}
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
     env:
       # Wrangler honors CLOUDFLARE_ENV as the default `--env` for every
       # subcommand (deploy, secret bulk, …). With `legacy_env: true` (set in
       # our build output) the worker name becomes `<top-level-name>-<env>`,
       # i.e. `stack-dev` / `stack-prod` — so deploy and secret bulk both
       # target the same worker without needing `--name` overrides.
+      # The expression repeats `environment:` above because Actions exposes no
+      # context holding the resolved environment name.
       CLOUDFLARE_ENV: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
     permissions:
       contents: read
