@@ -56,6 +56,12 @@ jobs:
       # embeds VITE_CONVEX_URL, and the running worker expects the deployment it
       # points at to already serve the current functions. The deploy key encodes
       # which deployment to target (dev vs prod), supplied per GitHub environment.
+      # Key scopes: `deployment:deploy` plus `deployment:data:view` — installing
+      # a component (convex.config.ts installs Better Auth) reads deployment
+      # data, so `deployment:deploy` alone fails the push. A migrations step
+      # chained here (`convex run migrations:runAll`) would also need
+      # `deployment:functions:runInternalMutations`. Details and the migration
+      # gotcha: docs/SETUP.md, "Deploy-key scopes".
       - name: Deploy Convex
         working-directory: packages/api
         run: bun run deploy

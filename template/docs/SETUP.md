@@ -59,11 +59,34 @@ its DNS. Subdomains (`dev.<domain>`) are usually clean; see
 - Generate **deploy keys** for both (Settings → Deploy keys → New):
   - dev key → GitHub `dev` env secret `CONVEX_DEPLOY_KEY`.
   - prod key → GitHub `prod` env secret `CONVEX_DEPLOY_KEY`.
-  - These are **deploy-only** (least privilege) — they exist so CI can run
-    `convex deploy`, nothing more.
+  - Scope each key to what CI runs, nothing more — the set is in
+    [Deploy-key scopes](#deploy-key-scopes) below.
 - Note each deployment's **HTTPS URL** → GitHub variable `CONVEX_URL` (per env).
 - Locally: `cd packages/api && bunx convex dev` does an interactive browser login
   and links your dev deployment (no key stored locally).
+
+### Deploy-key scopes
+
+`convex deploy` needs `deployment:deploy` **and `deployment:data:view`**:
+`convex.config.ts` installs the Better Auth component, and the component
+install/diff path reads deployment data. A key with `deployment:deploy` alone
+pushes plain schema + functions and fails on the first release that installs a
+component — for this template, the first push.
+
+Add `deployment:functions:runInternalMutations` only when you chain a
+migrations step after the deploy (`convex run migrations:runAll`, see the
+[migration helper reference](../packages/api/.claude/skills/convex-migration-helper/references/migrations-component.md#run-migrations-on-deploy)):
+the runner is an internal mutation. The migration's own writes happen
+server-side under the function's authority, so `deployment:data:write` stays
+off the key. One gotcha for that step: `migrations.runner([])` throws
+`Specify the migration` at runtime, so the release that retires the last
+migration fails the `runAll` step — after the schema push already succeeded,
+which leaves the worker deploy blocked. While the registry is empty, export
+`runAll` as a no-op `internalMutation`, and swap `migrations.runner([...])`
+back in with the next real migration.
+
+Each missing scope fails the push fast and names the scope in the error, so a
+too-narrow key is easy to widen — the set above skips those rounds.
 
 ### Deployment env vars
 
@@ -256,8 +279,8 @@ op read "op://<project> prod/convex/auth-secret" | xargs bunx convex env set --p
 gh variable set CONVEX_URL --env prod --body "https://<prod>.convex.cloud"
 ```
 
-CI deploy keys are **deploy-only** (`deployment:deploy` scope for Convex), least
-privilege.
+CI deploy keys carry only the scopes the workflow uses — for Convex,
+`deployment:deploy` + `deployment:data:view` ([§2](#deploy-key-scopes)).
 
 ---
 
