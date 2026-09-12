@@ -12,9 +12,8 @@ import { describe, expect, test } from "vitest";
 type ValueExport = { name: string; line: number };
 
 /**
- * The exports of `source` that a bundler must keep. A regex cannot do this: it
- * misses the `export { X }` and `export * from` forms, and it cannot tell an
- * erased type export from a value one.
+ * A regex cannot do this: it misses the `export { X }` and `export * from`
+ * forms, and it cannot tell an erased type export from a value one.
  */
 function valueExports(source: string, fileName: string): ValueExport[] {
   const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
@@ -66,7 +65,6 @@ function valueExports(source: string, fileName: string): ValueExport[] {
   return found;
 }
 
-/** Every identifier a declaration binds, flattening destructuring patterns. */
 function boundNames(name: ts.BindingName): string[] {
   if (ts.isIdentifier(name)) return [name.text];
   return name.elements.flatMap((element) =>
@@ -74,18 +72,28 @@ function boundNames(name: ts.BindingName): string[] {
   );
 }
 
-const ROUTES_DIR = join(dirname(fileURLToPath(import.meta.url)), "routes");
+const APP_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+// The generator's own config, so the scan cannot drift from the route tree it
+// builds. The `-` prefix exclusion is not in here — the generator hardcodes it.
+const { routesDirectory, routeFileIgnorePattern } = JSON.parse(
+  readFileSync(join(APP_DIR, "tsr.config.json"), "utf8"),
+) as { routesDirectory: string; routeFileIgnorePattern: string };
+
+const ROUTES_DIR = join(APP_DIR, routesDirectory);
+const IGNORED = new RegExp(routeFileIgnorePattern);
 
 /**
- * Route files per ADR 0005: everything under `src/routes/` except the `-`
- * prefixed private directories (ADR 0002) and the colocated tests, which the
- * route generator also skips.
+ * Route files per ADR 0005: everything under the routes directory except the
+ * `-` prefixed private files and directories (ADR 0002) and the files the
+ * generator itself ignores.
  */
 function routeFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
-    if (entry.isDirectory()) return entry.name.startsWith("-") ? [] : routeFiles(path);
-    if (/\.test\.tsx?$/.test(entry.name)) return [];
+    if (entry.name.startsWith("-")) return [];
+    if (entry.isDirectory()) return routeFiles(path);
+    if (IGNORED.test(relative(ROUTES_DIR, path))) return [];
     return /\.tsx?$/.test(entry.name) ? [path] : [];
   });
 }
@@ -95,6 +103,8 @@ const ADVICE = [
   "A second value export stops TanStack Start from code-splitting the route's",
   "render path, so the component stays in the eager bundle and nothing warns.",
   "Fix: move the component to a `-components/` directory beside the route file.",
+  "A file under routes/ that is not a route takes a `-` prefix (ADR 0002),",
+  "which keeps it out of the route tree and out of this check.",
   "See docs/adr/0005-route-component-colocation.md",
 ].join("\n");
 
@@ -162,9 +172,8 @@ describe("valueExports", () => {
   });
 
   test("reads .tsx, where a lone type argument is not a JSX element", () => {
-    expect(names("const cast = <T,>(v: T) => v;\nexport const Route = cast(1);")).toEqual([
-      "Route",
-    ]);
+    const source = "const cast = <T,>(v: T) => v;\nexport const Route = cast(1);";
+    expect(valueExports(source, "sample.tsx").map((e) => e.name)).toEqual(["Route"]);
   });
 
   test("gives the 1-based line of each export", () => {
@@ -181,24 +190,16 @@ describe("the routes directory", () => {
     expect(files.length).toBeGreaterThan(0);
   });
 
-  test("skips `-` prefixed directories and colocated tests", () => {
-    expect(files.filter((f) => f.includes("/-") || /\.test\.tsx?$/.test(f))).toEqual([]);
-  });
-
   test.each(
     files.map((f) => [relative(ROUTES_DIR, f), f] as const),
-  )("routes/%s exports only `Route`", (rel, file) => {
-    const offenders = valueExports(readFileSync(file, "utf8"), file).filter(
-      (e) => e.name !== "Route",
-    );
-    const report =
-      offenders.length === 0
-        ? ""
-        : [
-            ...offenders.map((e) => `routes/${rel}:${e.line} exports \`${e.name}\``),
-            "",
-            ADVICE,
-          ].join("\n");
-    expect(report).toBe("");
+  )("routes/%s exports `Route` and nothing else", (rel, file) => {
+    const exports = valueExports(readFileSync(file, "utf8"), file);
+    const problems = exports
+      .filter((e) => e.name !== "Route")
+      .map((e) => `routes/${rel}:${e.line} exports \`${e.name}\``);
+    if (!exports.some((e) => e.name === "Route")) {
+      problems.push(`routes/${rel} exports no \`Route\``);
+    }
+    expect(problems.length === 0 ? "" : [...problems, "", ADVICE].join("\n")).toBe("");
   });
 });
