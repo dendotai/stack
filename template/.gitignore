@@ -56,3 +56,8 @@ coverage/
 
 # typescript
 *.tsbuildinfo
+
+# generated route tree — `tsr generate` rebuilds it, and `bun run typecheck`,
+# `test` and `build` run that first. Committing it made every pair of branches
+# that touch routes conflict in a file nobody edits by hand.
+apps/web/src/routeTree.gen.ts

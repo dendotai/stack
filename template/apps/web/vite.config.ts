@@ -35,11 +35,12 @@ export default defineConfig({
     devtools(),
     cloudflare({ viteEnvironment: { name: "ssr" } }),
     tailwindcss(),
-    // Route folders colocate their tests (`home.test.tsx` beside `route.tsx`,
-    // per ADR 0005). The generator scans every file under `routes/` and warns
-    // once per build for each one that exports no `Route`; this pattern keeps
-    // test files out of the scan instead.
-    tanstackStart({ router: { routeFileIgnorePattern: ".*\\.test\\.tsx?$" } }),
+    // Generator options live in `tsr.config.json`, so the plugin and the `tsr`
+    // CLI behind `bun run generate` read one source. Chief among them:
+    // `routeFileIgnorePattern` keeps the tests colocated in route folders
+    // (`home.test.tsx` beside `route.tsx`, per ADR 0005) out of the route scan,
+    // which otherwise warns once per build for each file exporting no `Route`.
+    tanstackStart(),
     viteReact(),
   ],
 });

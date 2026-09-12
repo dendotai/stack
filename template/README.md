@@ -63,6 +63,12 @@ bun run build      # build every workspace
 
 Each workspace's scripts are documented in its own README / `package.json`.
 
+`apps/web/src/routeTree.gen.ts` is generated, not committed: a fresh clone has
+no copy until something builds it. `bun run generate` in `apps/web` does that
+(`tsr generate`, configured by `apps/web/tsr.config.json`), and `typecheck`,
+`test` and `build` each run it first, so the three commands above need no extra
+step.
+
 `@biomejs/biome` is pinned exactly: `biome.json` declares the schema of that
 version, and a newer CLI reports a mismatch. When you bump the pin, run
 `bunx biome migrate --write` in the same commit.
