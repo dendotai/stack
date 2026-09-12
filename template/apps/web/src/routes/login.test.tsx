@@ -9,6 +9,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 const state = vi.hoisted(() => ({
   signUpDisabled: undefined as undefined | boolean,
   signIn: vi.fn(),
+  signInSocial: vi.fn(),
 }));
 
 vi.mock("@convex-dev/react-query", () => ({
@@ -20,7 +21,10 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 
 vi.mock("../lib/auth-client", () => ({
-  authClient: { signIn: { email: state.signIn }, signUp: { email: vi.fn() } },
+  authClient: {
+    signIn: { email: state.signIn, social: state.signInSocial },
+    signUp: { email: vi.fn() },
+  },
 }));
 
 import { LoginPage } from "./login";
@@ -28,6 +32,8 @@ import { LoginPage } from "./login";
 beforeEach(() => {
   state.signUpDisabled = false;
   state.signIn.mockReset();
+  state.signInSocial.mockReset();
+  state.signInSocial.mockResolvedValue({});
 });
 afterEach(cleanup);
 
@@ -69,6 +75,18 @@ test("shows the sign-up control only once the flag says sign-up is open", () => 
   state.signUpDisabled = false;
   render(<LoginPage returnPath="/home" />);
   expect(screen.getByRole("button", { name: "Sign up" })).toBeInTheDocument();
+});
+
+test("the Google button starts the social sign-in with the return path", async () => {
+  const user = userEvent.setup();
+  render(<LoginPage returnPath="/home/settings" />);
+
+  await user.click(screen.getByRole("button", { name: "Continue with Google" }));
+
+  expect(state.signInSocial).toHaveBeenCalledWith({
+    provider: "google",
+    callbackURL: "/home/settings",
+  });
 });
 
 test("the sign-up control switches the form to creating an account", async () => {

@@ -5,13 +5,13 @@ A minimal, **production-verified** starter for full-stack apps on this stack:
 - **Monorepo** — [bun](https://bun.sh) workspaces (`apps/*`, `packages/*`), [Biome](https://biomejs.dev) for lint/format.
 - **Web** (`apps/web`) — [TanStack Start](https://tanstack.com/start) on **Cloudflare Workers** ([`@cloudflare/vite-plugin`](https://developers.cloudflare.com/workers/vite-plugin/)), Tailwind v4 + shadcn/ui, reads via [`@convex-dev/react-query`](https://github.com/get-convex/convex-react-query).
 - **Backend** (`packages/api`) — [Convex](https://convex.dev) (dev + prod deployments).
-- **Auth** — first-party login: [Better Auth](https://better-auth.com) inside the Convex deployment ([`@convex-dev/better-auth`](https://github.com/get-convex/better-auth)), the app's own form and its own domain ([ADR 0004](docs/adr/0004-identity-plane-better-auth-in-convex.md)).
+- **Auth** — first-party login: [Better Auth](https://better-auth.com) inside the Convex deployment ([`@convex-dev/better-auth`](https://github.com/get-convex/better-auth)), the app's own form and its own domain, Google on the project's own OAuth client per environment ([ADR 0004](docs/adr/0004-identity-plane-better-auth-in-convex.md)).
 - **CI/CD** — GitHub Actions: PR checks + push-to-deploy (`dev` → dev env, `main` → prod).
 - **Mobile** — `apps/mobile/` is a README-only placeholder for a future Expo app.
 
-This is a **runnable app**, not a `{{mustache}}` skeleton: `/` landing, an
-email-and-password sign-in form served by the app itself, and a placeholder
-signed-in `/home` route that reads the current user (`Hello, {name}`) —
+This is a **runnable app**, not a `{{mustache}}` skeleton: `/` landing, a
+sign-in form served by the app itself (email and password, or Google), and a
+placeholder signed-in `/home` route that reads the current user (`Hello, {name}`) —
 demonstrating the authed read path end-to-end. Build your app by replacing
 `/home`.
 

@@ -53,13 +53,27 @@ Auth is an HTTP protocol, so a router in `convex/http.ts` is the only way in.
 Everything else stays where #38 puts it: the web app proxies the auth path to
 this router on its own domain, and app-owned endpoints never land here. The
 convention's wording is therefore "**no app-owned endpoints on the Convex
-router**", and this router is not an exception to it. Today the routes come
-from the component's own `registerRoutes`, which also serves the root
-`/.well-known/openid-configuration` redirect Convex needs to resolve the
-issuer. The Google slice replaces that call with the same routes hand-rolled,
-because the Google redirect must be derived from the front that started the
-sign-in and the component builds auth without the request. Both shapes build
-auth once at push time.
+router**", and this router is not an exception to it. The routes are
+hand-rolled rather than taken from the component's own `registerRoutes`: that
+call builds auth without the request, and the Google redirect has to be derived
+from the front that started the sign-in. `convex/http.ts` therefore carries the
+same three routes — the `/api/auth/` prefix for GET and POST, plus the root
+`/.well-known/openid-configuration` redirect Convex needs to resolve the issuer
+— and builds auth per request. It also builds auth once at module load, which
+is what keeps a missing variable a push failure.
+
+**One deployment serves several fronts, and each sign-in returns to its own.**
+`SITE_URL` names one front; every other front is listed in
+`AUTH_TRUSTED_ORIGINS` and would otherwise fail the CSRF origin check. Dev uses
+this for its two fronts — the deployed dev host and the local devsite host —
+against one deployment. The Google redirect is chosen per request from the
+forwarded front host, and only from a front already trusted, because that value
+reaches Google as `redirect_uri` and decides where the authorization code is
+delivered. A trusted front may override it with `GOOGLE_REDIRECT_URI`: Google
+refuses a redirect URI on a non-public TLD, so the local devsite host borrows a
+public hostname that Cloudflare 302s back to it (docs/SETUP.md §3). Better
+Auth's post-callback redirect is a path, so the browser resolves it against
+whichever front it is on, with no further configuration.
 
 **Linking is gated on a verified email.** A new auth user links to an existing
 unlinked `users` row with the same email only when the identity provider
@@ -68,9 +82,9 @@ and a row that already carries an `authUserId` is never re-linked. Without the
 gate, anyone signing up with a known address would claim that account.
 
 **Every required auth variable fails the push, not the first login.** The
-secret and the site URL are read through a helper that throws when unset, and
-the component's route registration builds auth once at module load, so
-`convex deploy` refuses a deployment that is missing either. Better Auth
+secret, the site URL and the Google client id and secret are read through a
+helper that throws when unset, and the router builds auth once at module load,
+so `convex deploy` refuses a deployment missing any of them. Better Auth
 otherwise falls back to a constant published in its own source and refuses it
 only when `NODE_ENV === "production"`, which the Convex runtime does not
 guarantee.

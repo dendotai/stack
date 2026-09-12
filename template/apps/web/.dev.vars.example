@@ -3,9 +3,10 @@
 # runtime reads .dev.vars (not process env) when emulating the Worker locally.
 
 # The worker holds no auth secrets. Better Auth runs inside the Convex
-# deployment and reads BETTER_AUTH_SECRET / SITE_URL / AUTH_DISABLE_SIGNUP from
-# the deployment's own environment (ADR 0004, docs/SETUP.md §2). Nothing here
-# signs a session or grants access to an identity provider.
+# deployment and reads every auth value — the session secret, the site URL, the
+# Google client — from the deployment's own environment (ADR 0004,
+# docs/SETUP.md §2). Nothing here signs a session or grants access to an
+# identity provider.
 
 # Your DEV Convex deployment URL.
 CONVEX_URL=https://your-dev-deployment.convex.cloud

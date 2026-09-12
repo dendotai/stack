@@ -85,7 +85,14 @@ the server-rendered markup.
 
 **Sign-in and sign-out do a full navigation** (`window.location.href`), not a
 router navigate: the root route resolves the session on the server, so the new
-cookie state only takes effect on a fresh document request.
+cookie state only takes effect on a fresh document request. Google sign-in
+navigates nothing of its own — Better Auth answers with a 302 and the browser
+leaves.
+
+**Pass a same-app path, never a URL, as a social sign-in's `callbackURL`.** Dev
+serves two fronts against one deployment, and a path is what returns the
+visitor to the one they started on. `safeReturnPath` is what makes a path from
+the query string safe to pass.
 
 ## Visual verification: screenshot the running app signed-in
 
