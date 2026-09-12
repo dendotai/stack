@@ -11,7 +11,7 @@
     "dev": "muxa -s @stack/web dev web -s @stack/api dev convex",
     "build": "bun --filter '*' build",
     "typecheck": "bun --filter '*' typecheck",
-    "test": "bun --filter '*' test",
+    "test": "bun --filter '*' test && bun test scripts/",
     "lint": "biome check .",
     "format": "biome format --write .",
     "check": "bun run lint && bun run typecheck && bun run test"
