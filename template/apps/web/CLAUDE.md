@@ -22,15 +22,44 @@ subscriptions, pagination, optimistic UI), **consult `docs.convex.dev` before
 defaulting**, then capture what you adopt here. See
 [ADR 0003](../../docs/adr/0003-convex-ai-files.md).
 
+## Route files
+
+**`Route` is a route file's only value export.** A second named export stops
+TanStack Start from code-splitting the route's render path, so the component
+stays in the eager bundle. Type exports are fine — they are erased. See
+[ADR 0005](../../docs/adr/0005-route-component-colocation.md).
+
+The component lives in a `-components/` directory beside the route file. A
+route that owns a second file (a test, a hook) gets its own directory:
+
+```
+routes/_app/
+  route.tsx                     layout route, exports only `Route`
+  -components/app-layout.tsx
+  home/
+    route.tsx                   exports only `Route`
+    -components/home.tsx        exports `Home`
+    -hooks/use-thing.ts         route-only hooks (ADR 0002)
+    home.test.tsx               imports `./-components/home`
+```
+
+Routes with no component (`api/auth/$` — a server handler) stay flat files with
+no `-components/`. Landing owns only its component, so it is a flat `index.tsx`
+plus `routes/-components/landing.tsx`. `__root.tsx` is the
+exception: every page renders it, so its shell and nav stay inline.
+
+A component used by a second route moves to `src/components/`; a hook with a
+second consumer moves to `lib/`.
+
 ## Page layout
 
 Signed-in app routes (everything under `_app`, e.g. `/home`) render inside the
-**`_app` pathless layout route** (`src/routes/_app.tsx`) — the TanStack Router
-convention for a shared layout. It provides the frame
-(`<main>` + `container mx-auto px-4`) around `<Outlet/>`; routes just render their
-content. `TopNav` (`__root.tsx`) uses the same `container mx-auto px-4`, so nav
-and content stay aligned. Landing (`/`) and login render *outside* `_app`, so
-they keep their own full-screen layouts.
+**`_app` pathless layout route** (`src/routes/_app/route.tsx`) — the TanStack
+Router convention for a shared layout. It provides the frame (`<main>` +
+`container mx-auto px-4`) around `<Outlet/>`; routes just render their content.
+`TopNav` (`__root.tsx`) uses the same `container mx-auto px-4`, so nav and
+content stay aligned. Landing (`/`) and login render *outside* `_app`, so they
+keep their own full-screen layouts.
 
 The frame uses Tailwind's `container` composed inline (the documented idiom —
 `container` itself doesn't center or pad; don't override it globally). **To opt
@@ -80,8 +109,8 @@ Five seams carry it, and a change to one usually needs the others:
 **Any form that posts sensitive fields must repeat the login page's guard**: a
 `method="post"` on the form and a submit disabled until a mount effect marks
 hydration. Before hydration the browser runs its own submission, and a GET puts
-the field values in the URL. `routes/login.test.tsx` asserts both properties of
-the server-rendered markup.
+the field values in the URL. `routes/login/login.test.tsx` asserts both
+properties of the server-rendered markup.
 
 **Sign-in and sign-out do a full navigation** (`window.location.href`), not a
 router navigate: the root route resolves the session on the server, so the new

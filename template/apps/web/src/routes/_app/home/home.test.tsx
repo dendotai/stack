@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-// The home route reads the current user through @convex-dev/react-query +
+// `Home` reads the current user through @convex-dev/react-query +
 // TanStack Query. Mock both layers so the component renders without a live
 // Convex client — we're testing the view, not the data plumbing.
 const state = vi.hoisted(() => ({
@@ -16,7 +16,7 @@ vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({ data: state.user, isPending: state.user === undefined }),
 }));
 
-import { Home } from "./_app.home";
+import { Home } from "./-components/home";
 
 afterEach(cleanup);
 

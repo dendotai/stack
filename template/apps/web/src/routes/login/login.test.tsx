@@ -20,14 +20,14 @@ vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({ data: state.signUpDisabled }),
 }));
 
-vi.mock("../lib/auth-client", () => ({
+vi.mock("../../lib/auth-client", () => ({
   authClient: {
     signIn: { email: state.signIn, social: state.signInSocial },
     signUp: { email: vi.fn() },
   },
 }));
 
-import { LoginPage } from "./login";
+import { LoginPage } from "./-components/login-page";
 
 beforeEach(() => {
   state.signUpDisabled = false;
