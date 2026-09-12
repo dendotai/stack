@@ -61,11 +61,14 @@ Compose/override classes with `cn()` (`lib/utils.ts` — clsx + tailwind-merge).
 
 Login is first-party: Better Auth runs inside the Convex deployment and the web
 app serves its own form ([ADR 0004](../../docs/adr/0004-identity-plane-better-auth-in-convex.md)).
-Four seams carry it, and a change to one usually needs the others:
+Five seams carry it, and a change to one usually needs the others:
 
-- `routes/api/auth/$.tsx` — proxies every Better Auth endpoint to the
-  deployment's `.convex.site` host, so cookies stay first-party. It rewrites
-  forwarded headers for an upstream bug; the comment there says which.
+- `lib/auth-proxy.ts` + `routes/api/auth/$.tsx` — proxies every Better Auth
+  endpoint to the deployment's `.convex.site` host, so cookies stay
+  first-party. The host is derived from `VITE_CONVEX_URL`, never a second
+  variable, so the app cannot proxy auth to a deployment it doesn't query.
+- `lib/auth-forward.ts` — the header rewrite both the proxy and the session
+  lookup send upstream; it works around an upstream bug the comment names.
 - `lib/auth-session.ts` — the server function that turns the session cookie
   into the JWT Convex validates. Root `beforeLoad` awaits it once per page load
   and puts it on the route context; read `context.sessionToken` instead of

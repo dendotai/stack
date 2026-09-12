@@ -19,8 +19,8 @@ to an existing project (the manual steps an agent should take).
   [ADR 0004](docs/adr/0004-identity-plane-better-auth-in-convex.md)): the app
   serves its own email-and-password form at `/login`, and
   `src/routes/api/auth/$.tsx` proxies every Better Auth endpoint to the
-  deployment's site URL (derived from `VITE_CONVEX_URL`; `VITE_CONVEX_SITE_URL`
-  overrides it for a local Convex backend), so sessions are first-party.
+  deployment's site URL, derived from `VITE_CONVEX_URL` with no second
+  variable, so sessions are first-party.
   `src/lib/auth-session.ts` resolves the session once per page load in a server
   function that returns early without a session cookie; the root route puts the
   token on the route context, hands it to the Convex SSR client, and drives the

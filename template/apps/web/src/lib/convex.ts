@@ -9,9 +9,4 @@ export const convex = new ConvexReactClient(url);
 // (ADR 0004), which answers on the deployment's `.convex.site` host. Derived
 // from the one URL rather than a second variable, so a deployed app can never
 // proxy auth to a different deployment than it queries.
-//
-// A local Convex backend serves HTTP actions on its own port instead, so
-// `VITE_CONVEX_SITE_URL` — which `convex dev` writes next to `VITE_CONVEX_URL`
-// — overrides the derivation when it is set.
-export const convexSiteUrl =
-  import.meta.env.VITE_CONVEX_SITE_URL || url.replace(/\.convex\.cloud$/, ".convex.site");
+export const convexSiteUrl = url.replace(/\.convex\.cloud$/, ".convex.site");
