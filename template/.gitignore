@@ -61,3 +61,6 @@ coverage/
 # `test` and `build` run that first. Committing it made every pair of branches
 # that touch routes conflict in a file nobody edits by hand.
 apps/web/src/routeTree.gen.ts
+
+# Claude Code worktree checkouts (EnterWorktree) — throwaway, one per agent session
+.claude/worktrees/
