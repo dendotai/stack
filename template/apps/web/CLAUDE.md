@@ -51,6 +51,11 @@ exception: every page renders it, so its shell and nav stay inline.
 A component used by a second route moves to `src/components/`; a hook with a
 second consumer moves to `lib/`.
 
+`src/routeTree.gen.ts` is generated and gitignored — never edit it, and never
+commit it. `bun run generate` rebuilds it, and `typecheck`, `test` and `build`
+run that first. Its options live in `tsr.config.json`, which the `tsr` CLI and
+the Vite plugin both read, so adding a route needs no config change.
+
 ## Page layout
 
 Signed-in app routes (everything under `_app`, e.g. `/home`) render inside the
