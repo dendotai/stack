@@ -15,8 +15,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Checks the template exactly as a downstream project's CI would
-# (template/.github/workflows/ci.yml), from inside template/.
+# Checks the template as a downstream project's CI would
+# (template/.github/workflows/ci.yml), from inside template/. The one step
+# left out is `init.mjs --check`: the template holds every placeholder by
+# definition, so that step fails here and belongs downstream only.
 jobs:
   check:
     runs-on: ubuntu-latest

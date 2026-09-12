@@ -23,6 +23,11 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
+      # A lost or partly reverted init rewrite leaves template placeholders
+      # behind and only surfaces as a wrong-zone deploy error. Fail here instead.
+      - name: Template placeholders
+        run: bun scripts/init.mjs --check
+
       - name: Lint
         run: bun run lint
 

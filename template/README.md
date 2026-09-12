@@ -45,8 +45,15 @@ still in place, run the script first: `bun scripts/init.mjs --name acme-com`
 the script). `--name` is the domain with dots→dashes and is the single token
 that flows into repo/package/scope/worker names; override any derived value
 with its own flag (`--scope`, `--domain`, `--dev-domain`, `--host`). The
+script commits the rewritten files as `Initialize from template: <name>`
+(`--no-commit` to skip; run it inside a git repository, `git init` first on a
+fresh copy) — an uncommitted rewrite is one `git reset --hard` away from a
+half-renamed repo that only fails at deploy. The
 script leaves display strings (the landing `<h1>`, the page `<title>`, this
 README) — `grep -rn '\bstack\b'` and edit by taste.
+
+`bun scripts/init.mjs --check` fails when any placeholder is still in the
+tree; CI (`.github/workflows/ci.yml`) runs it on every push and pull request.
 
 1. `bun install`.
 2. Provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.
@@ -58,6 +65,7 @@ README) — `grep -rn '\bstack\b'` and edit by taste.
 ```bash
 bun run dev        # web (:3000) + convex, in parallel — needs the `muxa` runner (see SETUP)
 bun run check      # lint + typecheck + test (mirrors CI)
+bun run test       # every workspace's tests, then the init script's (scripts/)
 bun run build      # build every workspace
 ```
 

@@ -24,8 +24,8 @@ an agent to:
 
 ```bash
 bunx giget gh:dendotai/stack/template my-app   # copies template/ into ./my-app
-cd my-app
-bun scripts/init.mjs --name my-app             # rename placeholders; --dry-run to preview
+cd my-app && git init
+bun scripts/init.mjs --name my-app             # rename placeholders + commit; --dry-run to preview
 ```
 
 Then follow [`template/README.md` → Setup](template/README.md#setup).
