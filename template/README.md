@@ -49,7 +49,9 @@ with its own flag (`--scope`, `--domain`, `--dev-domain`, `--host`). The
 script commits the rewritten files as `Initialize from template: <name>`
 (`--no-commit` to skip; run it inside a git repository, `git init` first on a
 fresh copy) — an uncommitted rewrite is one `git reset --hard` away from a
-half-renamed repo that only fails at deploy. The
+half-renamed repo that only fails at deploy. It then leaves `main` and `dev`
+at that commit, with `dev` checked out: the two branches the deploy pipeline
+reads, aligned from the start. The
 script leaves display strings (the landing `<h1>`, the page `<title>`, this
 README) — `grep -rn '\bstack\b'` and edit by taste.
 
@@ -64,7 +66,9 @@ from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
 
 1. `bun install`.
 2. `bun scripts/secrets-scaffold.mjs` — the per-environment secret-manager items.
-3. Provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.
+3. Create the GitHub repository, pushing `dev` first so it becomes the default
+   branch, then provision the external services and wire secrets — follow
+   **[docs/SETUP.md](docs/SETUP.md)**.
 4. Fill the `.dev.vars` / `.env.local` files the init script created, then
    `cd packages/api && bunx convex dev` once to link your dev deployment.
 

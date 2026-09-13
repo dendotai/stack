@@ -283,7 +283,25 @@ with the code intact.
 
 ---
 
-## 4. GitHub environments (Variables vs Secrets)
+## 4. GitHub repository and environments
+
+### Repository: push `dev` first
+
+`init.mjs` leaves the repository on `dev`, with `main` at the same commit.
+GitHub makes the first branch it receives the default branch, and the default
+is where pull requests go unless someone retargets them — so push `dev` before
+`main`, and feature work targets `dev` instead of production:
+
+```bash
+gh repo create <owner>/<name> --private --source . --push   # pushes the checked-out branch: dev
+git push -u origin main
+gh repo view --json defaultBranchRef --jq .defaultBranchRef.name   # dev
+```
+
+If that prints `main` (the repository existed before the push, or was created
+with an initial commit), set it: `gh repo edit --default-branch dev`.
+
+### Environments (Variables vs Secrets)
 
 `deploy.yml` reads two kinds of config — **Variables** (non-secret, visible in
 logs) and **Secrets** (masked). The names are **identical** across `dev` and `prod`;
