@@ -161,7 +161,7 @@ credential cannot reach prod sign-in.
 
 Each client's id and secret go to **that environment's Convex deployment** as
 `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` ([§2](#deployment-env-vars)), and to
-that environment's 1Password item under a `google`
+that environment's secret-manager item under a `google`
 section ([Secrets & environments](#secrets--environments)).
 
 Registering several redirect URIs on one client is harmless. Which one is live
@@ -269,7 +269,8 @@ dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub
 `prod` environment ← `<project> prod` — so values copy straight across with no
 chance of grabbing a dev value for prod, and prod keeps its blast-radius isolation.
 
-**Never paste secret values through the terminal/agent.** Pipe from `op`:
+**Never paste secret values through the terminal/agent.** Pipe from the
+manager's CLI (the examples use the 1Password CLI `op`):
 
 ```bash
 op read "op://<project> dev/convex/deploy key" | gh secret set CONVEX_DEPLOY_KEY --env dev
@@ -351,5 +352,6 @@ Lessons from bringing this stack up in production — any new project will hit t
 
 5. **GitHub Actions Variables vs Secrets are scoped per environment.** Identical
    names in `dev`/`prod`; the job's `environment:` selects which resolve. Keep
-   1Password as the source of truth and pipe `op read … | gh secret set …` so
+   the secret manager as the source of truth and pipe
+   `op read … | gh secret set …` so
    values never transit the terminal.
