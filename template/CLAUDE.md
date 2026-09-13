@@ -86,3 +86,18 @@ utilities and components/partials, **not** extracted class-string constants,
 global utility overrides, or `@apply`. When unsure, check the
 [Tailwind docs](https://tailwindcss.com/docs/styling-with-utility-classes)
 instead of inventing. Web specifics live in `apps/web/CLAUDE.md`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (`gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical labels, strings equal to their names, plus the state labels
+the maintenance workflow manages. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one root `CONTEXT.md` (created lazily) + `docs/adr/`. See `docs/agents/domain.md`.
