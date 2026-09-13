@@ -20,8 +20,9 @@ Three of those choices have a tempting alternative:
 - **Enable Better Auth's OAuth-provider plugin**, so the same library issues
   tokens for extensions, MCP, and API clients.
 - **Register the auth routes on the web app** like every other public endpoint,
-  since the template's convention (#38) is that the web app owns the public
-  HTTP surface and the backend package exposes no HTTP router.
+  since the template's convention
+  ([ADR 0006](0006-web-app-owns-public-http-surface.md)) is that the web app
+  owns the public HTTP surface and the backend package exposes no HTTP router.
 
 ## Decision
 
@@ -50,10 +51,10 @@ decision (#35). This ADR covers sign-in, sessions, and users only.
 **The Convex HTTP router exists, and it serves only Better Auth's routes.** The
 component's request handler must run in the Convex runtime (above), and Better
 Auth is an HTTP protocol, so a router in `convex/http.ts` is the only way in.
-Everything else stays where #38 puts it: the web app proxies the auth path to
-this router on its own domain, and app-owned endpoints never land here. The
-convention's wording is therefore "**no app-owned endpoints on the Convex
-router**", and this router is not an exception to it. The routes are
+Everything else stays where ADR 0006 puts it: the web app proxies the auth
+path to this router on its own domain, and app-owned endpoints never land
+here. The convention's wording is therefore "**no app-owned endpoints on the
+Convex router**", and this router is not an exception to it. The routes are
 hand-rolled rather than taken from the component's own `registerRoutes`: that
 call builds auth without the request, and the Google redirect has to be derived
 from the front that started the sign-in. `convex/http.ts` therefore carries the

@@ -5,7 +5,7 @@ import { httpAction } from "./_generated/server";
 import { AUTH_BASE_PATH, createAuth } from "./auth";
 
 // The only routes on this router are Better Auth's (ADR 0004); app-owned
-// endpoints live in the web app.
+// endpoints live in the web app (ADR 0006).
 const http = httpRouter();
 
 declare const process: { env: { CONVEX_SITE_URL?: string } };
