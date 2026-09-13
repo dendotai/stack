@@ -11,9 +11,10 @@ as a real Better Auth JWT, so there's no mock-user shortcut. Instead we sign in
 ## Setup (once)
 
 Make sure the dev server is running (`bun dev` from the repo root) and reachable
-at `https://stack.internal` (a Caddy/Tailscale dev origin — the optional
-[`@dendotai/devsite`](https://github.com/dendotai/devsite) tool sets this up; or
-point `STACK_BASE_URL` at `https://localhost:3000`). In a checkout that sets
+at `https://stack.internal` (a Caddy/Tailscale dev origin — the
+[`@den-ai/devsite`](https://www.npmjs.com/package/@den-ai/devsite) plugin
+registers it, see `docs/SETUP.md`; or point `STACK_BASE_URL` at the
+`http://localhost:<port>` URL the dev server prints). In a checkout that sets
 `PORT` (an agent worktree, see `.env.local.example`), the scripts target
 `http://localhost:<PORT>` on their own. Then:
 

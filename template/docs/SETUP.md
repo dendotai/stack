@@ -16,6 +16,17 @@ from `main`.
   with labeled output. If you don't have `muxa`, replace the `dev` script with
   any parallel runner — or just run the two in separate terminals:
   `bun --filter @stack/web dev` and `cd packages/api && bunx convex dev`.
+- **A local HTTPS dev host (optional):** the web app declares
+  `https://<project>.internal` in `apps/web/package.json#devSite`, and the
+  [`@den-ai/devsite`](https://www.npmjs.com/package/@den-ai/devsite) Vite
+  plugin (a dev dependency) serves it through a local Caddy, with no fixed
+  port. One-time per machine: `brew install caddy`, make `*.internal` resolve
+  to the machine, then `bun run devsite` from the repo root (`devsite init`,
+  asks for `sudo`). The package README has the steps, including phone access
+  over Tailscale. Without it, `bun run dev` prints a plain `http://localhost`
+  URL that still works — the rows marked **dev only** in
+  [§2](#2-convex-two-deployments) and the hop in [§3](#3-google-sign-in)
+  exist for this host and can be skipped.
 - **A secret manager with a CLI** for piping secrets into GitHub and Convex
   without printing them. `scripts/secrets-scaffold.mjs` creates the items for
   the 1Password CLI `op`; any other manager builds them by hand from its

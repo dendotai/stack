@@ -3,7 +3,7 @@
   "tasks": [
     {
       "label": "Dev: web",
-      "detail": "TanStack Start on :3000",
+      "detail": "TanStack Start dev server",
       "type": "shell",
       "command": "bun --filter ./apps/web dev",
       "isBackground": true,

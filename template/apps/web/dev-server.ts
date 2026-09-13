@@ -1,27 +1,12 @@
 import type { ServerOptions } from "vite";
 
-export type DevSite = { host: string; port: number };
-
 // `PORT` is the worktree override: an agent checkout beside the main one gets
 // its own port and is reached on plain localhost by a headless browser only.
-// The devsite front belongs to the main checkout alone, so a `PORT` run leaves
-// it out — its HMR client would otherwise connect to a proxy that does not
-// route to this port.
-export function devServerOptions(portFromEnv: string | undefined, devSite: DevSite): ServerOptions {
-  if (portFromEnv === undefined || portFromEnv === "") {
-    return {
-      port: devSite.port,
-      strictPort: true,
-      // Listen on all interfaces so a Tailscale-reachable Caddy proxy
-      // (https://<host>) can reach the dev server.
-      host: true,
-      allowedHosts: [devSite.host],
-      // Caddy terminates TLS on :443 and proxies to the dev port, so the HMR
-      // client must connect back over wss to the proxy host, not the raw port.
-      // Browse via https://<host> everywhere (incl. desktop) so HMR works.
-      hmr: { host: devSite.host, protocol: "wss", clientPort: 443 },
-    };
-  }
+// Without it the devsite plugin binds a free port and registers the host's
+// route; that route belongs to the main checkout alone, and the plugin has no
+// off switch of its own, so a `PORT` run must leave it out of the plugin list.
+export function devServerOptions(portFromEnv: string | undefined): ServerOptions | undefined {
+  if (portFromEnv === undefined || portFromEnv === "") return undefined;
   const port = Number(portFromEnv);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error(`PORT must be a TCP port number, got "${portFromEnv}"`);
