@@ -28,7 +28,9 @@ cd my-app && git init
 bun scripts/init.mjs --name my-app             # rename placeholders + commit; --dry-run to preview
 ```
 
-Then follow [`template/README.md` → Setup](template/README.md#setup).
+The script leaves `main` and `dev` at its commit, with `dev` checked out, so the
+first push makes `dev` the default branch. Then follow
+[`template/README.md` → Setup](template/README.md#setup).
 
 ## Develop the template
 

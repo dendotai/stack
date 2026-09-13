@@ -31,6 +31,12 @@
 // record which template version you started from, so future template updates
 // can be applied (see README).
 //
+// After the commit the repository holds the two branches deploy.yml reads,
+// `main` (production) and `dev` (where work integrates), both at that commit,
+// with `dev` checked out. Push `dev` first and GitHub makes it the default
+// branch, so pull requests target it (docs/SETUP.md §4). A fresh repository's
+// only branch is renamed to `main`; branches that already exist are kept.
+//
 // `--check` walks the tree for the same placeholders and exits 1 naming every
 // file that still has one. A project's CI runs it so a lost rewrite fails
 // there, not at deploy. It fails on the template itself by design.
@@ -177,6 +183,7 @@ const dryRun = flags["dry-run"] === true;
 const commit = flags["no-commit"] !== true;
 const COMMIT_MESSAGE = `Initialize from template: ${name}`;
 const COMMIT_HINT = `git add -A && git commit -m "${COMMIT_MESSAGE}"`;
+const BRANCH_HINT = "git branch -M main && git switch -c dev";
 
 console.log("\n  Resolved config:");
 for (const [label, value] of [
@@ -221,7 +228,10 @@ if (!dryRun) {
 console.log(
   `\n  ${dryRun ? "would rewrite" : "✓ rewrote"} ${rewritten.length} files for "${name}" (@${scope}, ${domain})`,
 );
-if (dryRun) process.exit(0);
+if (dryRun) {
+  if (commit) console.log("  would commit, then leave main and dev at that commit, on dev");
+  process.exit(0);
+}
 
 function commitRewrite() {
   let toplevel;
@@ -232,6 +242,7 @@ function commitRewrite() {
       "not a git repository — the rewrite is NOT committed. Init one and commit",
       "before any other git operation:",
       `  git init && ${COMMIT_HINT}`,
+      `  ${BRANCH_HINT}`,
     ];
   }
   if (toplevel !== realpathSync(ROOT)) {
@@ -240,6 +251,7 @@ function commitRewrite() {
       "committed. Commit it there yourself, or `git init` here first, before any",
       "other git operation:",
       `  ${COMMIT_HINT}`,
+      `  ${BRANCH_HINT}`,
     ];
   }
   let unborn = false;
@@ -261,6 +273,7 @@ function commitRewrite() {
       "git commit failed — the rewrite is NOT committed. Fix the cause and commit",
       "before any other git operation:",
       `  ${COMMIT_HINT}`,
+      `  ${BRANCH_HINT}`,
       "",
       ...String(error.stderr ?? error.message)
         .trim()
@@ -269,16 +282,59 @@ function commitRewrite() {
   }
 }
 
+function branchExists(branch) {
+  try {
+    git(["rev-parse", "--verify", "-q", `refs/heads/${branch}`]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Returns the line to print. `dev` is only checked out when it points at
+// HEAD: switching to a `dev` that is behind would show the old tree and make
+// the commit look lost.
+function setUpBranches() {
+  const current = git(["branch", "--show-current"]); // "" when HEAD is detached
+  if (!branchExists("main")) {
+    if (current && current !== "dev") git(["branch", "-m", "main"]);
+    else git(["branch", "main"]);
+  }
+  if (!branchExists("dev")) git(["branch", "dev"]);
+  if (git(["rev-parse", "refs/heads/dev"]) !== git(["rev-parse", "HEAD"])) {
+    return `· dev is behind, staying on ${git(["branch", "--show-current"])}`;
+  }
+  git(["switch", "-q", "dev"]);
+  const aligned = git(["rev-parse", "refs/heads/main"]) === git(["rev-parse", "HEAD"]);
+  return aligned ? "✓ on dev, main at the same commit" : "✓ on dev";
+}
+
 let failure = null;
 if (commit && rewritten.length > 0) {
   failure = commitRewrite();
-  if (!failure) console.log(`  ✓ committed as ${git(["rev-parse", "--short", "HEAD"])}`);
+  if (!failure) {
+    console.log(`  ✓ committed as ${git(["rev-parse", "--short", "HEAD"])}`);
+    try {
+      console.log(`  ${setUpBranches()}`);
+    } catch (error) {
+      failure = [
+        "branch setup failed — the rewrite is committed, but main and dev are not",
+        "in place. Fix the cause, then:",
+        `  ${BRANCH_HINT}`,
+        "",
+        ...String(error.stderr ?? error.message)
+          .trim()
+          .split("\n"),
+      ];
+    }
+  }
 }
 
 console.log("\n  Next:");
 console.log("   1. Edit display strings: grep -rn '\\bstack\\b' --exclude-dir=node_modules .");
 console.log("   2. bun install");
-console.log("   3. Follow docs/SETUP.md to provision Cloudflare / Convex / GitHub.");
+console.log("   3. Follow docs/SETUP.md: create the GitHub repo (push dev first), then");
+console.log("      provision Cloudflare / Convex and wire the secrets.");
 console.log("   4. Fill the .dev.vars / .env.local files this script created.");
 console.log("   5. cd packages/api && bunx convex dev   (links your dev deployment)\n");
 
@@ -289,7 +345,9 @@ if (failure) {
 if (!commit && rewritten.length > 0) {
   warn([
     "--no-commit: the rewrite is not committed. Commit it before any other git",
-    "operation — a checkout, reset or stash can silently drop it:",
+    "operation — a checkout, reset or stash can silently drop it — then set up",
+    "the deploy branches:",
     `  ${COMMIT_HINT}`,
+    `  ${BRANCH_HINT}`,
   ]);
 }
