@@ -56,14 +56,15 @@ README) — `grep -rn '\bstack\b'` and edit by taste.
 tree; CI (`.github/workflows/ci.yml`) runs it on every push and pull request.
 
 `bun scripts/secrets-scaffold.mjs` creates the per-environment secret-manager
-items (`<name> dev`, `<name> prod`) from `scripts/secrets.manifest.json` with
+items (`<project> dev`, `<project> prod`) from `scripts/secrets.manifest.json` with
 the 1Password CLI; `--print` prints the same shape as a checklist for any other
 manager, `--dry-run` shows the plan. The layout and the pipe commands that read
 from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
 
 1. `bun install`.
-2. Provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.
-3. Fill the `.dev.vars` / `.env.local` files the init script created, then
+2. `bun scripts/secrets-scaffold.mjs` — the per-environment secret-manager items.
+3. Provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.
+4. Fill the `.dev.vars` / `.env.local` files the init script created, then
    `cd packages/api && bunx convex dev` once to link your dev deployment.
 
 ## Develop
@@ -71,7 +72,7 @@ from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
 ```bash
 bun run dev        # web (:3000) + convex, in parallel — needs the `muxa` runner (see SETUP)
 bun run check      # lint + typecheck + test (mirrors CI)
-bun run test       # every workspace's tests, then the init script's (scripts/)
+bun run test       # every workspace's tests, then the scripts' own (scripts/)
 bun run build      # build every workspace
 ```
 

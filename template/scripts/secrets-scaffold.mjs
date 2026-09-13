@@ -1,18 +1,17 @@
 #!/usr/bin/env bun
 // Create the per-environment secret-manager items from `secrets.manifest.json`.
 //
-//   bun scripts/secrets-scaffold.mjs [--vault v] [--name n] [--dry-run]
+//   bun scripts/secrets-scaffold.mjs [--vault v] [--dry-run]
 //   bun scripts/secrets-scaffold.mjs --print
 //
 // The manifest is the source of truth for the item shape docs/SETUP.md reads
-// values from: one item per environment (`<name> dev`, `<name> prod`), a
-// section per service, env-free field labels. Hand-built items get a label or
+// values from: one item per environment (`<project> dev`, `<project> prod`),
+// a section per service, env-free field labels. Hand-built items get a label or
 // section slightly wrong, and every `op read "op://…"` path built on it fails;
 // this script builds them from the manifest instead.
 //
 //   --vault   <name>   the vault to create the items in (default: the project
 //                      name from package.json; created when missing)
-//   --name    <name>   the item prefix (default: the project name)
 //   --dry-run          read the store, print what would be created, write nothing
 //   --print            print the manifest as a checklist and exit; needs no
 //                      secret manager at all
@@ -65,13 +64,10 @@ function op(args, input) {
 }
 
 const flags = parseFlags(process.argv.slice(2));
-const packageName = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).name;
-const name = typeof flags.name === "string" ? flags.name : packageName;
-const vault = typeof flags.vault === "string" ? flags.vault : packageName;
+const name = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).name;
+const vault = typeof flags.vault === "string" ? flags.vault : name;
 const dryRun = flags["dry-run"] === true;
 
-// The custom domain per environment, from wrangler's routes; the deployed
-// origin of the web app is derived from it.
 const wrangler = (await import(pathToFileURL(join(ROOT, "apps/web/wrangler.jsonc")).href)).default;
 const domainOf = (env) => wrangler.env?.[env]?.routes?.[0]?.pattern;
 
@@ -83,11 +79,18 @@ const fieldsOf = (env) => {
       label: field.label,
       secret: field.secret === true,
       generate: field.generate === true,
-      for: field.for,
       value: field.value && domain ? field.value.replaceAll("{domain}", domain) : "",
     })),
   );
 };
+
+for (const env of MANIFEST.environments) {
+  if (domainOf(env)) continue;
+  warn([
+    `no custom domain for "${env}" in apps/web/wrangler.jsonc (env.${env}.routes[0].pattern)`,
+    "— fields derived from it are created empty.",
+  ]);
+}
 
 const itemTitle = (env) => `${name} ${env}`;
 
@@ -135,7 +138,7 @@ const taken = MANIFEST.environments
 if (taken.length > 0) {
   warn([
     `${taken.map((t) => `"${t}"`).join(", ")} already exists in the "${vault}" vault — nothing written.`,
-    "Compare it against `--print`, or pass --name / --vault to create the items elsewhere.",
+    "Compare it against `--print`, or pass --vault to create the items in another vault.",
   ]);
   process.exit(1);
 }
@@ -183,7 +186,7 @@ for (const env of MANIFEST.environments) {
       value: f.generate ? randomBytes(32).toString("base64") : f.value,
     })),
   };
-  op(["item", "create", "--vault", vault], JSON.stringify(item));
+  op(["item", "create", "--vault", vault, "-"], JSON.stringify(item));
   console.log(`  ✓ created "${title}"`);
   console.log(`    fill in the 1Password app: ${toFill.join(", ")}`);
 }

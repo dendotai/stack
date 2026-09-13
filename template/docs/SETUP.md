@@ -47,9 +47,7 @@ The script creates the vault when it is missing (named after the project;
 you to fill in the manager's UI — except `convex / auth-secret`, generated on
 the spot and never printed, and `app / site-url`, prefilled from the custom
 domain in `apps/web/wrangler.jsonc`. It stops without writing when an item
-already exists; `--dry-run` shows the plan. Anything not tied to one project
-(an account-level credential reused everywhere) lives in a separate umbrella
-vault you keep across projects, not in these items.
+already exists; `--dry-run` shows the plan.
 
 **Rules**
 

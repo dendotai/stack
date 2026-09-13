@@ -13,5 +13,6 @@
   `deploy key` label is `deploy-key`, the optional `<project> shared` item is
   gone, and `BETTER_AUTH_SECRET` is piped from the item instead of generated
   at deploy time. `init.mjs` lists the script in its "Next:" steps. To apply:
-  copy the two `scripts/` files and `scripts/secrets-scaffold.test.mjs`,
-  and re-read the secrets section of SETUP.md.
+  copy `scripts/secrets.manifest.json`, `scripts/secrets-scaffold.mjs` and
+  `scripts/secrets-scaffold.test.mjs`, and re-read the secrets section of
+  SETUP.md.

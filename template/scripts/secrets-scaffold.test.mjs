@@ -150,8 +150,8 @@ describe("secrets-scaffold.mjs creates the items", () => {
       const items = createdItems(dir);
       expect(items.map((i) => i.item.title)).toEqual(["acme-com dev", "acme-com prod"]);
       for (const { args, item } of items) {
-        expect(args).toContain("--vault");
-        expect(args[args.indexOf("--vault") + 1]).toBe("acme-com");
+        // `-` is what makes `op item create` read the item JSON from stdin.
+        expect(args).toEqual(["item", "create", "--vault", "acme-com", "-"]);
         expect(item.sections.map((s) => s.label)).toEqual([
           "cloudflare",
           "convex",
@@ -189,18 +189,30 @@ describe("secrets-scaffold.mjs creates the items", () => {
     });
   });
 
-  test("uses an existing vault and honours --vault and --name", () => {
+  test("uses an existing vault and honours --vault", () => {
     withFixture((dir) => {
-      const { status } = scaffold(dir, ["--vault", "shared", "--name", "widget"], {
-        vaults: ["shared"],
-      });
+      const { status } = scaffold(dir, ["--vault", "shared"], { vaults: ["shared"] });
 
       expect(status).toBe(0);
       const kinds = opCalls(dir).map((c) => c.args.slice(0, 2));
       expect(kinds).not.toContainEqual(["vault", "create"]);
       const items = createdItems(dir);
-      expect(items.map((i) => i.item.title)).toEqual(["widget dev", "widget prod"]);
+      expect(items.map((i) => i.item.title)).toEqual(["acme-com dev", "acme-com prod"]);
       expect(items[0].args[items[0].args.indexOf("--vault") + 1]).toBe("shared");
+    });
+  });
+
+  test("a missing custom domain warns and leaves site-url empty", () => {
+    withFixture((dir) => {
+      writeFileSync(join(dir, "apps/web/wrangler.jsonc"), '{ "name": "acme-com" }\n');
+
+      const { status, stderr } = scaffold(dir, []);
+
+      expect(status).toBe(0);
+      expect(stderr).toContain('no custom domain for "dev"');
+      expect(stderr).toContain('no custom domain for "prod"');
+      const [dev] = createdItems(dir);
+      expect(field(dev.item, "app", "site-url").value).toBe("");
     });
   });
 
