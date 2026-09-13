@@ -6,6 +6,7 @@
       "name": "stack",
       "devDependencies": {
         "@biomejs/biome": "2.5.1",
+        "@den-ai/devsite": "^0.1.0",
         "typescript": "^5.7.2",
       },
     },
@@ -35,6 +36,7 @@
       },
       "devDependencies": {
         "@cloudflare/workers-types": "^4.20251104.0",
+        "@den-ai/devsite": "^0.1.0",
         "@tanstack/devtools-vite": "0.6.0",
         "@tanstack/react-devtools": "0.10.2",
         "@tanstack/react-router-devtools": "1.166.13",
@@ -194,6 +196,8 @@
     "@csstools/css-syntax-patches-for-csstree": ["@csstools/css-syntax-patches-for-csstree@1.1.5", "", { "peerDependencies": { "css-tree": "^3.2.1" }, "optionalPeers": ["css-tree"] }, "sha512-oNjBvzLq2GPZtJphCjLqXow/cHySHSgtxvKZb7OqSZ/xHgw6NWNhfad+6AB9cLeVm6eA9d/qMll3JdEHjy6M+A=="],
 
     "@csstools/css-tokenizer": ["@csstools/css-tokenizer@4.0.0", "", {}, "sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA=="],
+
+    "@den-ai/devsite": ["@den-ai/devsite@0.1.0", "", { "peerDependencies": { "vite": "^8.0.0" }, "bin": { "devsite": "dist/cli.js" } }, "sha512-6H+tSl3p735fqdY3FvVxCLxbMdI0GxKzUZwbRIzeV7SFqTrabrJn5hEdxmbKue7EeeaeD7ufgXzEuAlYZCbnLQ=="],
 
     "@edge-runtime/primitives": ["@edge-runtime/primitives@6.0.0", "", {}, "sha512-FqoxaBT+prPBHBwE1WXS1ocnu/VLTQyZ6NMUBAdbP7N2hsFTTxMC/jMu2D/8GAlMQfxeuppcPuCUk/HO3fpIvA=="],
 

@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "dev": "muxa -s @stack/web dev web -s @stack/api dev convex",
+    "devsite": "devsite init",
     "build": "bun --filter '*' build",
     "typecheck": "bun --filter '*' typecheck",
     "test": "bun --filter '*' test && bun test scripts/",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.1",
+    "@den-ai/devsite": "^0.1.0",
     "typescript": "^5.7.2"
   },
   "packageManager": "bun@1.3.8"
