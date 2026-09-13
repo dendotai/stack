@@ -13,9 +13,10 @@ import { defineConfig } from "vite";
 // second checkout running the plugin would register the same host and take
 // the route away from the main checkout. The plugin has no off switch of its
 // own, so the skip lives here.
-const port = process.env.PORT === undefined ? undefined : Number(process.env.PORT);
+const rawPort = process.env.PORT;
+const port = rawPort === undefined || rawPort === "" ? undefined : Number(rawPort);
 if (port !== undefined && !Number.isInteger(port)) {
-  throw new Error(`PORT must be an integer, got "${process.env.PORT}"`);
+  throw new Error(`PORT must be an integer, got "${rawPort}"`);
 }
 
 export default defineConfig({
