@@ -61,6 +61,22 @@ commit it. `bun run generate` rebuilds it, and `typecheck`, `test` and `build`
 run that first. Its options live in `tsr.config.json`, which the `tsr` CLI and
 the Vite plugin both read, so adding a route needs no config change.
 
+**`tsc` checks the generated tree like any other source file.** The generator's
+default header carries `// @ts-nocheck`; `routeTreeFileHeader` in
+`tsr.config.json` omits it. The Vite plugin appends a footer the `tsr` CLI does
+not: type imports of `getRouter` (`router.tsx`) and `startInstance`
+(`start.ts`) that register the router and the Start config. Under
+`@ts-nocheck`, nothing in that footer is verified. `bun run typecheck`
+regenerates with the CLI, so it checks the body; an editor after `vite dev`
+checks the footer too. If a router upgrade makes the generated file fail
+`tsc`, its output changed — fix or report that, do not restore the header.
+
+**`src/start.ts` stays even while it configures nothing.** When the file is
+absent, the plugin's fallback footer imports `createStart` and never uses it,
+which `noUnusedLocals` rejects. When it exists without a `startInstance`
+export, `vite build` fails on the missing export. Start options
+(`requestMiddleware`, …) go in this file when a change needs them.
+
 ## Page layout
 
 Signed-in app routes (everything under `_app`, e.g. `/home`) render inside the
