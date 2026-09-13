@@ -10,9 +10,10 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { baseUrl } from "./base-url.mjs";
 import { isLoginUrl, signedInMarker } from "./selectors.mjs";
 
-const BASE = process.env.STACK_BASE_URL ?? "https://stack.internal";
+const BASE = baseUrl();
 const STATE = fileURLToPath(new URL("../.auth/state.json", import.meta.url));
 const OUT_DIR = fileURLToPath(new URL("../screenshots/", import.meta.url));
 

@@ -8,7 +8,8 @@
 //     form headlessly. No human needed.
 //   • Interactive — otherwise opens a real browser window for you to sign in.
 //
-//   bun run auth:login            # default base https://stack.internal
+//   bun run auth:login            # base https://stack.internal, or
+//                                 # http://localhost:$PORT when PORT is set
 //   HEADED=1 bun run auth:login   # watch the automated login (debug)
 //
 // `.auth/` (the saved session) is gitignored; the test creds live in the
@@ -18,6 +19,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { baseUrl } from "./base-url.mjs";
 import { waitForSignedIn } from "./selectors.mjs";
 
 function parseEnv(path) {
@@ -30,7 +32,7 @@ function parseEnv(path) {
   return out;
 }
 
-const BASE = process.env.STACK_BASE_URL ?? "https://stack.internal";
+const BASE = baseUrl();
 const STATE = fileURLToPath(new URL("../.auth/state.json", import.meta.url));
 const DEBUG_SHOT = fileURLToPath(new URL("../.auth/login-debug.png", import.meta.url));
 

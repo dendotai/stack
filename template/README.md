@@ -76,6 +76,8 @@ from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
 
 ```bash
 bun run dev        # web (:3000) + convex, in parallel — needs the `muxa` runner (see SETUP)
+PORT=3012 bun dev  # web on http://localhost:3012 instead, localhost only, no devsite host —
+                   # for a second checkout (an agent worktree); apps/web/.env.local can hold it
 bun run check      # lint + typecheck + test (mirrors CI)
 bun run lint       # biome, then every workspace's own lint script (e.g. an Expo app's `expo lint`)
 bun run test       # every workspace's tests, then the scripts' own (scripts/)
