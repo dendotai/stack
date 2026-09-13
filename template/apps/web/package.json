@@ -3,14 +3,13 @@
   "private": true,
   "type": "module",
   "devSite": {
-    "host": "stack.internal",
-    "port": 3000
+    "host": "stack.internal"
   },
   "imports": {
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev --port 3000 --strictPort",
+    "dev": "vite dev",
     "generate": "tsr generate",
     "build": "bun run generate && vite build",
     "preview": "vite preview",
@@ -45,6 +44,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251104.0",
+    "@den-ai/devsite": "^0.1.0",
     "@tanstack/devtools-vite": "0.6.0",
     "@tanstack/react-devtools": "0.10.2",
     "@tanstack/react-router-devtools": "1.166.13",

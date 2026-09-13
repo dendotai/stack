@@ -64,7 +64,8 @@ tree; CI (`.github/workflows/ci.yml`) runs it on every push and pull request.
 ## Develop
 
 ```bash
-bun run dev        # web (:3000) + convex, in parallel — needs the `muxa` runner (see SETUP)
+bun run dev        # web + convex, in parallel — needs the `muxa` runner (see SETUP)
+bun run devsite    # once per machine: Caddy route for https://stack.internal (see SETUP)
 bun run check      # lint + typecheck + test (mirrors CI)
 bun run lint       # biome, then every workspace's own lint script (e.g. an Expo app's `expo lint`)
 bun run test       # every workspace's tests, then the init script's (scripts/)
@@ -72,6 +73,15 @@ bun run build      # build every workspace
 ```
 
 Each workspace's scripts are documented in its own README / `package.json`.
+
+The web dev server has no fixed port. The
+[`@den-ai/devsite`](https://www.npmjs.com/package/@den-ai/devsite) Vite plugin
+binds a free port and registers `https://stack.internal` with the local Caddy
+(`package.json#devSite.host` in `apps/web`), so any number of projects run at
+once. `PORT=3012 bun run dev` is the exception for a second checkout of this
+project (an agent worktree): Vite then serves plain `http://localhost:3012`
+and the plugin stays off, so the checkout does not take the host's route from
+the main checkout.
 
 `apps/web/src/routeTree.gen.ts` is generated, not committed: a fresh clone has
 no copy until something builds it. `bun run generate` in `apps/web` does that
