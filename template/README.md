@@ -101,9 +101,9 @@ In a **git worktree** the deployment is `<team>:<project>:dev/agent/<name>`
 script sets what the first push needs and nothing more — a generated
 `BETTER_AUTH_SECRET`, `SITE_URL` of the worktree's own localhost origin, and
 placeholder Google client values, so Google sign-in does not work there — and
-pushes once. `apps/web/.dev.vars` gets `PORT` (a free port in 3001–3099; 3000
-is the main checkout's) and `CONVEX_URL`; `apps/web/.env.local` gets
-`VITE_CONVEX_URL`. In the **main checkout** it links your personal dev
+pushes once. `apps/web/.env.local` gets `PORT` (a free port in 3001–3099; 3000
+is the main checkout's — see Develop) and `VITE_CONVEX_URL`; `apps/web/.dev.vars`
+gets `CONVEX_URL`. In the **main checkout** it links your personal dev
 deployment instead, with no expiration and no `PORT`, and sets only the values
 that deployment lacks.
 

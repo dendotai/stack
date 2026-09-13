@@ -3,8 +3,8 @@
   `dev/agent/<worktree-name>` deployment in a git worktree, the personal dev
   deployment in the main checkout — sets the four auth values the push needs
   (generated secret, localhost `SITE_URL`, placeholder Google client), pushes
-  once, and writes `apps/web/.dev.vars` (`PORT`, `CONVEX_URL`) and
-  `apps/web/.env.local` (`VITE_CONVEX_URL`). To apply: copy
+  once, and writes `apps/web/.env.local` (`PORT`, `VITE_CONVEX_URL`) and
+  `apps/web/.dev.vars` (`CONVEX_URL`). To apply: copy
   `scripts/worktree.mjs` and `scripts/worktree.test.mjs`, add the
   `worktree:setup` script to the root `package.json`, and put your Convex team
   and project slugs into `packages/api/package.json` under `convex`

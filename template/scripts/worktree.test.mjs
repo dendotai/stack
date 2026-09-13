@@ -221,14 +221,14 @@ describe("worktree.mjs setup in a worktree", () => {
       expect(deployment.vars.GOOGLE_CLIENT_ID).toBe("placeholder");
       expect(deployment.vars.GOOGLE_CLIENT_SECRET).toBe("placeholder");
 
-      const devVars = read(wt, "apps/web/.dev.vars");
-      const port = Number(envValue(devVars, "PORT"));
+      const envLocal = read(wt, "apps/web/.env.local");
+      const port = Number(envValue(envLocal, "PORT"));
       expect(port).toBeGreaterThanOrEqual(3001);
       expect(port).toBeLessThanOrEqual(3099);
       expect(deployment.vars.SITE_URL).toBe(`http://localhost:${port}`);
       const url = `https://${deployment.name}.convex.cloud`;
-      expect(envValue(devVars, "CONVEX_URL")).toBe(url);
-      expect(envValue(read(wt, "apps/web/.env.local"), "VITE_CONVEX_URL")).toBe(url);
+      expect(envValue(envLocal, "VITE_CONVEX_URL")).toBe(url);
+      expect(envValue(read(wt, "apps/web/.dev.vars"), "CONVEX_URL")).toBe(url);
       expect(envValue(read(wt, "packages/api/.env.local"), "CONVEX_DEPLOYMENT")).toContain(
         `dev:${deployment.name}`,
       );
@@ -268,7 +268,7 @@ describe("worktree.mjs setup in a worktree", () => {
     withFixture((fixture) => {
       const wt = fixture.addWorktree("impl-87");
       expect(setup(fixture, wt).status).toBe(0);
-      const port = envValue(read(wt, "apps/web/.dev.vars"), "PORT");
+      const port = envValue(read(wt, "apps/web/.env.local"), "PORT");
       const oldUrl = envValue(read(wt, "apps/web/.dev.vars"), "CONVEX_URL");
       fixture.expire("dev/agent/impl-87");
       fixture.clearCalls();
@@ -279,26 +279,26 @@ describe("worktree.mjs setup in a worktree", () => {
       expect(callsNamed(fixture.calls(), "deployment", "create")).toHaveLength(1);
       const [deployment] = fixture.deployments();
       expect(Object.keys(deployment.vars).sort()).toEqual([...REQUIRED_VARS].sort());
-      const devVars = read(wt, "apps/web/.dev.vars");
+      const envLocal = read(wt, "apps/web/.env.local");
       const url = `https://${deployment.name}.convex.cloud`;
       expect(url).not.toBe(oldUrl);
-      expect(envValue(devVars, "CONVEX_URL")).toBe(url);
+      expect(envValue(read(wt, "apps/web/.dev.vars"), "CONVEX_URL")).toBe(url);
+      expect(envValue(envLocal, "VITE_CONVEX_URL")).toBe(url);
       // The port survives: the worktree's server keeps its address across deployments.
-      expect(envValue(devVars, "PORT")).toBe(port);
-      expect(envValue(read(wt, "apps/web/.env.local"), "VITE_CONVEX_URL")).toBe(url);
+      expect(envValue(envLocal, "PORT")).toBe(port);
     });
   });
 
-  test("skips a port another worktree already holds in its .dev.vars", () => {
+  test("skips a port another worktree already holds in its .env.local", () => {
     withFixture((fixture) => {
       const first = fixture.addWorktree("impl-1");
       mkdirSync(join(first, "apps/web"), { recursive: true });
-      writeFileSync(join(first, "apps/web/.dev.vars"), "PORT=3001\n");
+      writeFileSync(join(first, "apps/web/.env.local"), "PORT=3001\n");
       const second = fixture.addWorktree("impl-2");
 
       expect(setup(fixture, second).status).toBe(0);
 
-      const port = Number(envValue(read(second, "apps/web/.dev.vars"), "PORT"));
+      const port = Number(envValue(read(second, "apps/web/.env.local"), "PORT"));
       expect(port).not.toBe(3001);
       expect(port).toBeGreaterThan(3001);
       expect(port).toBeLessThanOrEqual(3099);
@@ -347,8 +347,8 @@ describe("worktree.mjs setup in the main checkout", () => {
       expect(Object.keys(deployment.vars).sort()).toEqual([...REQUIRED_VARS].sort());
       expect(deployment.vars.SITE_URL).toBe("http://localhost:3000");
 
+      expect(envValue(read(fixture.root, "apps/web/.env.local"), "PORT")).toBeUndefined();
       const devVars = read(fixture.root, "apps/web/.dev.vars");
-      expect(envValue(devVars, "PORT")).toBeUndefined();
       expect(envValue(devVars, "CONVEX_URL")).toBe(`https://${deployment.name}.convex.cloud`);
       expect(envValue(devVars, "CLOUDFLARE_API_TOKEN")).toBe("keep-me");
     });
@@ -430,6 +430,7 @@ describe("worktree.mjs setup refuses to guess", () => {
       expect(status).toBe(1);
       expect(callsNamed(fixture.calls(), "dev", "--once")).toEqual([]);
       expect(existsSync(join(wt, "apps/web/.dev.vars"))).toBe(false);
+      expect(existsSync(join(wt, "apps/web/.env.local"))).toBe(false);
     });
   });
 });

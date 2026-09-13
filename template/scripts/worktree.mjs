@@ -18,9 +18,10 @@
 //      deployment yet, or it expired) `convex deployment create --select`.
 //      Either way `packages/api/.env.local` now names it.
 //   2. Pick a free port in the 3001–3099 band for the worktree (a rerun keeps
-//      the port already in `.dev.vars`; 3000 is the main checkout's).
-//   3. Write `apps/web/.dev.vars` (PORT, CONVEX_URL) and
-//      `apps/web/.env.local` (VITE_CONVEX_URL). Other lines are kept.
+//      the port already in `.env.local`; 3000 is the main checkout's).
+//   3. Write `apps/web/.dev.vars` (CONVEX_URL) and `apps/web/.env.local`
+//      (PORT, VITE_CONVEX_URL) — `.env.local` is the file the web dev server
+//      reads PORT from. Other lines are kept.
 //   4. Set the values the first push needs and that the deployment lacks:
 //      a generated BETTER_AUTH_SECRET, SITE_URL=http://localhost:<port>, and
 //      placeholder Google client values. Values already set are never touched.
@@ -150,7 +151,7 @@ function upsertEnvFile(path, entries) {
   writeFileSync(path, text);
 }
 
-// Ports the sibling worktrees wrote into their own `.dev.vars`; a server there
+// Ports the sibling worktrees wrote into their own `.env.local`; a server there
 // need not be running for the port to be taken.
 function portsHeldByWorktrees() {
   const held = new Set();
@@ -160,7 +161,7 @@ function portsHeldByWorktrees() {
     if (!line.startsWith("worktree ")) continue;
     const dir = line.slice("worktree ".length);
     if (resolve(dir) === resolve(ROOT)) continue;
-    const port = Number(parseEnvFile(join(dir, "apps/web/.dev.vars")).PORT);
+    const port = Number(parseEnvFile(join(dir, "apps/web/.env.local")).PORT);
     if (Number.isInteger(port)) held.add(port);
   }
   return held;
@@ -215,12 +216,12 @@ async function setup(flags) {
   const url = apiEnv.CONVEX_URL;
   if (!url) fail(["packages/api/.env.local has no CONVEX_URL after the selection"]);
 
-  const devVarsPath = join(WEB_DIR, ".dev.vars");
+  const envLocalPath = join(WEB_DIR, ".env.local");
   const port = inWorktree
-    ? await pickPort(Number(parseEnvFile(devVarsPath).PORT))
+    ? await pickPort(Number(parseEnvFile(envLocalPath).PORT))
     : mainCheckoutPort();
-  upsertEnvFile(devVarsPath, { ...(inWorktree ? { PORT: port } : {}), CONVEX_URL: url });
-  upsertEnvFile(join(WEB_DIR, ".env.local"), { VITE_CONVEX_URL: url });
+  upsertEnvFile(join(WEB_DIR, ".dev.vars"), { CONVEX_URL: url });
+  upsertEnvFile(envLocalPath, { ...(inWorktree ? { PORT: port } : {}), VITE_CONVEX_URL: url });
   console.log(`  · ${url}${inWorktree ? `, app on http://localhost:${port}` : ""}`);
 
   const present = new Set(
