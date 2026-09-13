@@ -96,6 +96,31 @@ fights co-location. When two elements must share styling (e.g. nav/content
 alignment), share a built-in utility or a **component**, not a string.
 Compose/override classes with `cn()` (`lib/utils.ts` — clsx + tailwind-merge).
 
+## Selection: chrome may be unselectable, content may not
+
+Buttons, grips, chips, `kbd` hints and other affordances can take
+`select-none`. Anything the user might reasonably want to copy — a title, a
+description, an id, an error message, a URL — must stay selectable. The failure
+is invisible in review: the diff and the screenshot both look right, and it only
+surfaces when someone drag-selects a title and nothing happens. So any
+interaction pattern that suppresses selection as a side effect — a drag adapter,
+a long-press handler, `-webkit-touch-callout`, a canvas or virtualized row —
+gets an explicit check that it did not take the content with it.
+
+Touch is the one exception: on a coarse pointer, suppressing selection is often
+the only way to make a long-press drag feel right. Scope it to that pointer
+(`pointer-coarse:select-none`) instead of applying it everywhere.
+
+**`@atlaskit/pragmatic-drag-and-drop` blocks selection in every element it
+registers.** `draggable()` adds `draggable="true"` to the element you pass, and
+browsers do not allow text selection inside a `draggable` element. `dragHandle`
+does not avoid this: the handle only constrains where a drag may *start*; the
+attribute still lands on the whole registered element. So the natural shape —
+register the row, pass a grip as the handle — silently costs selection of
+everything in the row. Either set `draggable={false}` on the inner content
+container, or register the draggable on the handle element itself and supply a
+custom drag preview (`setCustomNativeDragPreview`) so the ghost shows the row.
+
 ## Auth
 
 Login is first-party: Better Auth runs inside the Convex deployment and the web
