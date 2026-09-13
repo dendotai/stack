@@ -158,6 +158,10 @@ its DNS. Subdomains (`dev.<domain>`) are usually clean; see
     [Deploy-key scopes](#deploy-key-scopes) below.
 - Note each deployment's name and **HTTPS URL** → `convex / deployment` and
   `convex / url` in that env's item → GitHub variable `CONVEX_URL` (per env).
+- Put the **team and project slugs** into `packages/api/package.json`
+  (`convex.team`, `convex.project` — the two path segments of the project's
+  dashboard URL). `bun run worktree:setup` reads them to link a dev deployment
+  without a prompt ([README](../README.md#worktrees)).
 - Locally: `cd packages/api && bunx convex dev` does an interactive browser login
   and links your dev deployment (no key stored locally).
 
