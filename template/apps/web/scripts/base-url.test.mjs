@@ -11,8 +11,8 @@ describe("baseUrl", () => {
   });
 
   test("STACK_BASE_URL wins over PORT", () => {
-    expect(baseUrl({ PORT: "3012", STACK_BASE_URL: "https://localhost:3000" })).toBe(
-      "https://localhost:3000",
+    expect(baseUrl({ PORT: "3012", STACK_BASE_URL: "http://localhost:3000" })).toBe(
+      "http://localhost:3000",
     );
   });
 });

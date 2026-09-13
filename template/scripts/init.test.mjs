@@ -6,9 +6,13 @@ import { dirname, join } from "node:path";
 
 // Git must not read the developer's own config: identity, signing and hooks
 // would otherwise leak into the throwaway repos, and a missing identity would
-// fail the commit.
+// fail the commit. The default branch is pinned to `master` so the rename the
+// script does on a fresh repository is observable whatever git's own default is.
 const gitConfig = join(mkdtempSync(join(tmpdir(), "init-gitconfig-")), "config");
-writeFileSync(gitConfig, "[user]\n\tname = Ada\n\temail = ada@example.com\n");
+writeFileSync(
+  gitConfig,
+  "[user]\n\tname = Ada\n\temail = ada@example.com\n[init]\n\tdefaultBranch = master\n",
+);
 const env = { ...process.env, GIT_CONFIG_GLOBAL: gitConfig, GIT_CONFIG_NOSYSTEM: "1" };
 
 // A small tree with the placeholders the script rewrites, plus one file it
@@ -185,6 +189,78 @@ describe("init.mjs --check", () => {
       expect(status).toBe(1);
       expect(stderr).toContain(WRANGLER);
       expect(stderr).not.toContain("package.json");
+    });
+  });
+});
+
+describe("init.mjs sets up the two deploy branches", () => {
+  test("a fresh repository ends on dev, with main at the same commit", () => {
+    withFixture((dir) => {
+      git(dir, "init", "-q");
+
+      const { status, stdout } = init(dir, "--name", "acme-com");
+
+      expect(status).toBe(0);
+      expect(git(dir, "branch", "--show-current")).toBe("dev");
+      expect(git(dir, "branch", "--format=%(refname:short)")).toBe("dev\nmain");
+      expect(git(dir, "rev-parse", "main")).toBe(git(dir, "rev-parse", "dev"));
+      expect(git(dir, "log", "-1", "--format=%s", "main")).toBe(
+        "Initialize from template: acme-com",
+      );
+      expect(stdout).toContain("on dev, main at the same commit");
+    });
+  });
+
+  test("a repository with history is renamed to main and ends on dev too", () => {
+    withCommittedFixture((dir) => {
+      expect(git(dir, "branch", "--show-current")).toBe("master");
+
+      expect(init(dir, "--name", "acme-com").status).toBe(0);
+
+      expect(git(dir, "branch", "--show-current")).toBe("dev");
+      expect(git(dir, "branch", "--format=%(refname:short)")).toBe("dev\nmain");
+      expect(git(dir, "rev-parse", "main")).toBe(git(dir, "rev-parse", "dev"));
+    });
+  });
+
+  test("existing main and dev are kept; the commit lands on the checked-out one", () => {
+    withCommittedFixture((dir) => {
+      git(dir, "branch", "-m", "main");
+      git(dir, "switch", "-q", "-c", "dev");
+      const before = git(dir, "rev-parse", "HEAD");
+
+      expect(init(dir, "--name", "acme-com").status).toBe(0);
+
+      expect(git(dir, "branch", "--show-current")).toBe("dev");
+      expect(git(dir, "branch", "--format=%(refname:short)")).toBe("dev\nmain");
+      expect(git(dir, "rev-parse", "main")).toBe(before);
+      expect(git(dir, "log", "-1", "--format=%s", "dev")).toBe(
+        "Initialize from template: acme-com",
+      );
+    });
+  });
+
+  test("dev is not checked out when it is behind the commit", () => {
+    withCommittedFixture((dir) => {
+      git(dir, "branch", "-m", "main");
+      git(dir, "branch", "dev");
+
+      const { status, stdout } = init(dir, "--name", "acme-com");
+
+      expect(status).toBe(0);
+      expect(git(dir, "branch", "--show-current")).toBe("main");
+      expect(git(dir, "status", "--porcelain")).toBe("");
+      expect(init(dir, "--check").status).toBe(0);
+      expect(stdout).toContain("dev is behind");
+    });
+  });
+
+  test("--no-commit creates no branch and says how to", () => {
+    withCommittedFixture((dir) => {
+      const { stderr } = init(dir, "--name", "acme-com", "--no-commit");
+
+      expect(git(dir, "branch", "--format=%(refname:short)")).toBe("master");
+      expect(stderr).toContain("git branch -M main && git switch -c dev");
     });
   });
 });

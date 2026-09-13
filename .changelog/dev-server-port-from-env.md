@@ -1,15 +1,14 @@
-- **`PORT` picks the web dev server's port** (`apps/web`): with `PORT` set —
-  in the process environment or in `apps/web/.env.local` — `bun dev` serves
-  `http://localhost:<PORT>` on localhost only and skips the devsite host and
-  its HMR-through-proxy setup, so a second checkout (an agent worktree) runs
-  beside the main one. Without `PORT` nothing changes: the port still comes
-  from `package.json#devSite`. The screenshot scripts (`auth:login`,
-  `screenshots`) target `http://localhost:<PORT>` by default when it is set;
-  `STACK_BASE_URL` still wins. The `dev` script drops its `--port`/`--strictPort`
-  flags, which `vite.config.ts` already set, so the config is the one source.
-  To apply: copy `apps/web/dev-server.ts`, `apps/web/dev-server.test.ts`,
-  `apps/web/vite.config.ts` and `apps/web/scripts/base-url.mjs` with its test;
-  edit the two scripts to import `baseUrl`; add `*.test.ts` and
+- **`PORT` also comes from `apps/web/.env.local`, and the screenshot scripts
+  follow it** (`apps/web`): the worktree override for the web dev server now
+  reads `PORT` from the process environment or from `.env.local` (through
+  Vite's `loadEnv`; the environment wins), fails on a value that is not a TCP
+  port number, and binds on localhost only. The rule lives in
+  `apps/web/dev-server.ts` as a pure function with a test. The screenshot
+  scripts (`auth:login`, `screenshots`) target `http://localhost:<PORT>` by
+  default when it is set; `STACK_BASE_URL` still wins. To apply: copy
+  `apps/web/dev-server.ts` and `apps/web/dev-server.test.ts`,
+  `apps/web/vite.config.ts`, and `apps/web/scripts/base-url.mjs` with its
+  test; edit the two scripts to import `baseUrl`; add `*.test.ts` and
   `scripts/*.test.mjs` to `vitest.config.ts` and `*.ts` to `tsconfig.json`'s
-  `include`; set `"dev": "vite dev"`; and take the `PORT` block from
+  `include`; and take the `PORT` block from
   [`apps/web/.env.local.example`](apps/web/.env.local.example).

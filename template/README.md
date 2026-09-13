@@ -30,7 +30,8 @@ template into projects created from it.
 │   └── api/              # Convex schema + functions + generated client (@stack/api)
 ├── docs/
 │   ├── SETUP.md          # external setup: Cloudflare, Convex, GitHub, secrets
-│   └── adr/              # architecture decision records
+│   ├── adr/              # architecture decision records
+│   └── agents/           # config the agent skills read: issue tracker, labels, domain docs
 ├── .github/workflows/    # ci.yml (checks) + deploy.yml (push-to-deploy)
 ├── VERSION               # template version this tree is at
 └── TEMPLATE_CHANGELOG.md # what changed between template versions
@@ -48,16 +49,27 @@ with its own flag (`--scope`, `--domain`, `--dev-domain`, `--host`). The
 script commits the rewritten files as `Initialize from template: <name>`
 (`--no-commit` to skip; run it inside a git repository, `git init` first on a
 fresh copy) — an uncommitted rewrite is one `git reset --hard` away from a
-half-renamed repo that only fails at deploy. The
+half-renamed repo that only fails at deploy. It then leaves `main` and `dev`
+at that commit, with `dev` checked out: the two branches the deploy pipeline
+reads, aligned from the start. The
 script leaves display strings (the landing `<h1>`, the page `<title>`, this
 README) — `grep -rn '\bstack\b'` and edit by taste.
 
 `bun scripts/init.mjs --check` fails when any placeholder is still in the
 tree; CI (`.github/workflows/ci.yml`) runs it on every push and pull request.
 
+`bun scripts/secrets-scaffold.mjs` creates the per-environment secret-manager
+items (`<project> dev`, `<project> prod`) from `scripts/secrets.manifest.json` with
+the 1Password CLI; `--print` prints the same shape as a checklist for any other
+manager, `--dry-run` shows the plan. The layout and the pipe commands that read
+from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
+
 1. `bun install`.
-2. Provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.
-3. Put your Convex team and project slugs into `packages/api/package.json`
+2. `bun scripts/secrets-scaffold.mjs` — the per-environment secret-manager items.
+3. Create the GitHub repository, pushing `dev` first so it becomes the default
+   branch, then provision the external services and wire secrets — follow
+   **[docs/SETUP.md](docs/SETUP.md)**.
+4. Put your Convex team and project slugs into `packages/api/package.json`
    (`convex.team`, `convex.project`), then `bun run worktree:setup` links your
    dev deployment and writes its lines into the env files the init script
    created. Fill the rest of `.dev.vars` / `.env.local` by hand.
@@ -65,17 +77,27 @@ tree; CI (`.github/workflows/ci.yml`) runs it on every push and pull request.
 ## Develop
 
 ```bash
-bun run dev        # web (:3000) + convex, in parallel — needs the `muxa` runner (see SETUP)
-PORT=3012 bun dev  # web on http://localhost:3012 instead, localhost only, no devsite host —
-                   # for a second checkout (an agent worktree); apps/web/.env.local can hold it
+bun run dev        # web + convex, in parallel — needs the `muxa` runner (see SETUP)
+bun run devsite    # once per machine: Caddy route for https://stack.internal (see SETUP)
+PORT=3012 bun dev  # web on http://localhost:3012 instead — a second checkout (an agent worktree)
 bun run check      # lint + typecheck + test (mirrors CI)
 bun run lint       # biome, then every workspace's own lint script (e.g. an Expo app's `expo lint`)
-bun run test       # every workspace's tests, then the init script's (scripts/)
+bun run test       # every workspace's tests, then the scripts' own (scripts/)
 bun run build      # build every workspace
 bun run worktree:setup  # this checkout's own Convex dev deployment + env files (see Worktrees)
 ```
 
 Each workspace's scripts are documented in its own README / `package.json`.
+
+The web dev server has no fixed port. The
+[`@den-ai/devsite`](https://www.npmjs.com/package/@den-ai/devsite) Vite plugin
+binds a free port and registers `https://stack.internal` with the local Caddy
+(`package.json#devSite.host` in `apps/web`), so any number of projects run at
+once. `PORT=3012 bun run dev` is the exception for a second checkout of this
+project (an agent worktree): Vite then serves plain `http://localhost:3012`
+and the plugin stays off, so the checkout does not take the host's route from
+the main checkout. The checkout's `apps/web/.env.local` can hold `PORT` instead
+(see `.env.local.example`); the process environment wins over the file.
 
 `apps/web/src/routeTree.gen.ts` is generated, not committed: a fresh clone has
 no copy until something builds it. `bun run generate` in `apps/web` does that
