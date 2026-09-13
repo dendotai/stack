@@ -30,7 +30,8 @@ template into projects created from it.
 │   └── api/              # Convex schema + functions + generated client (@stack/api)
 ├── docs/
 │   ├── SETUP.md          # external setup: Cloudflare, Convex, GitHub, secrets
-│   └── adr/              # architecture decision records
+│   ├── adr/              # architecture decision records
+│   └── agents/           # config the agent skills read: issue tracker, labels, domain docs
 ├── .github/workflows/    # ci.yml (checks) + deploy.yml (push-to-deploy)
 ├── VERSION               # template version this tree is at
 └── TEMPLATE_CHANGELOG.md # what changed between template versions
