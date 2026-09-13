@@ -51,6 +51,23 @@ already exists; `--dry-run` shows the plan.
 
 **Rules**
 
+- **One section per provider (`convex`, `cloudflare`, `google`), field labels
+  inside it.** Written here as `<section> / <label>`, which is also how the
+  CLI addresses a field: `op://<vault>/<item>/<section>/<label>`.
+- **No spaces in field labels.** `.` separates namespace elements, `-` separates
+  words within an element: `deploy-key`, `api-token`, `web.client-id`,
+  `fcm.service-account`. Spaceless labels stay clean in secret references
+  (`op://` paths) and greppable in docs and scripts, and the two separators
+  carry distinct meaning: element boundary versus word boundary.
+- **Prefix the label with its consumer where a provider section can hold more
+  than one credential** — `google / web.client-id`, later `google / ios.client-id`
+  or `google / fcm.service-account`. Name the consumer after the `apps/`
+  directory it authenticates (`web` for `apps/web`), or after the service
+  that holds the credential when no app does (`fcm`). A provider with one
+  credential per item (`convex / deploy-key`) takes no prefix.
+- **Every label states the credential's role**, so its permissions are
+  predictable without opening the issuing dashboard: `deploy-key`, `api-token`,
+  `auth-secret` — never a bare `key`, `token` or `secret`.
 - **Field labels carry no env qualifier** — inside `<project> dev`,
   `convex / deploy-key` unambiguously means the dev key.
 - **Account-level values** (`cloudflare / account-id`, `cloudflare / api-token`)
@@ -58,9 +75,10 @@ already exists; `--dry-run` shows the plan.
   then covers every value.
 - **`convex / auth-secret` (the deployment's `BETTER_AUTH_SECRET`) is split
   per-env on purpose** so a dev leak can't forge prod sessions.
-- **The `google` section in each env item holds that environment's own OAuth
-  client** ([§3](#3-google-sign-in)) — two clients, two pairs of values,
-  nothing shared between them.
+- **The `google` section in each env item holds `web.client-id` and
+  `web.client-secret`** — that environment's own OAuth client
+  ([§3](#3-google-sign-in)). Two clients, two pairs of values, one pair per
+  item; nothing is shared between them.
 
 **Why split per env:** the environment is the dominant axis (most fields differ
 dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub
@@ -72,8 +90,10 @@ manager; with `op`, the vault is the project name unless you passed `--vault`:
 
 ```bash
 op read "op://<vault>/<project> dev/convex/deploy-key" | gh secret set CONVEX_DEPLOY_KEY --env dev
+op read "op://<vault>/<project> prod/cloudflare/api-token" | gh secret set CLOUDFLARE_API_TOKEN --env prod
 # Convex deployment variables go to the deployment, not to GitHub:
 op read "op://<vault>/<project> prod/convex/auth-secret" | xargs bunx convex env set --prod BETTER_AUTH_SECRET
+op read "op://<vault>/<project> dev/google/web.client-secret" | xargs bunx convex env set GOOGLE_CLIENT_SECRET
 # variables are not secret:
 gh variable set CONVEX_URL --env prod --body "$(op read "op://<vault>/<project> prod/convex/url")"
 ```
@@ -182,7 +202,7 @@ cd packages/api
 op read "op://<vault>/<project> dev/convex/auth-secret" | xargs bunx convex env set BETTER_AUTH_SECRET
 bunx convex env set SITE_URL https://dev.<domain>
 bunx convex env set GOOGLE_CLIENT_ID <the dev client id>
-op read "op://<vault>/<project> dev/google/client-secret" | xargs bunx convex env set GOOGLE_CLIENT_SECRET
+op read "op://<vault>/<project> dev/google/web.client-secret" | xargs bunx convex env set GOOGLE_CLIENT_SECRET
 bunx convex env set AUTH_TRUSTED_ORIGINS https://<project>.internal
 bunx convex env set GOOGLE_REDIRECT_URI https://internal.<domain>/api/auth/callback/google
 # …and again with --prod using the prod values, minus the two dev-only rows.
@@ -225,8 +245,10 @@ credential cannot reach prod sign-in.
 
 Each client's id and secret go to **that environment's Convex deployment** as
 `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` ([§2](#deployment-env-vars)), and to
-that environment's secret-manager item as `google / client-id` and
-`google / client-secret` ([Secrets & environments](#secrets--environments)).
+that environment's secret-manager item under a `google` section as
+`web.client-id` (text) and `web.client-secret` (password). The `web.` prefix
+names the consumer, so a later client for another app sits beside it in the
+same section ([Secrets & environments](#secrets--environments)).
 
 Registering several redirect URIs on one client is harmless. Which one is live
 is deployment config, not Google config.
@@ -368,5 +390,6 @@ Lessons from bringing this stack up in production — any new project will hit t
 
 5. **GitHub Actions Variables vs Secrets are scoped per environment.** Identical
    names in `dev`/`prod`; the job's `environment:` selects which resolve. Keep
-   the secret manager as the source of truth and pipe from it
-   (`op read … | gh secret set …`) so values never transit the terminal.
+   the secret manager as the source of truth and pipe
+   `op read … | gh secret set …` so
+   values never transit the terminal.

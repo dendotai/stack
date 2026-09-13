@@ -167,7 +167,7 @@ describe("secrets-scaffold.mjs creates the items", () => {
           value: "",
         });
         expect(field(item, "convex", "deploy-key")).toMatchObject({ type: "CONCEALED", value: "" });
-        expect(field(item, "google", "client-secret")).toMatchObject({
+        expect(field(item, "google", "web.client-secret")).toMatchObject({
           type: "CONCEALED",
           value: "",
         });

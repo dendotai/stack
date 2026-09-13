@@ -30,7 +30,8 @@ template into projects created from it.
 │   └── api/              # Convex schema + functions + generated client (@stack/api)
 ├── docs/
 │   ├── SETUP.md          # external setup: Cloudflare, Convex, GitHub, secrets
-│   └── adr/              # architecture decision records
+│   ├── adr/              # architecture decision records
+│   └── agents/           # config the agent skills read: issue tracker, labels, domain docs
 ├── .github/workflows/    # ci.yml (checks) + deploy.yml (push-to-deploy)
 ├── VERSION               # template version this tree is at
 └── TEMPLATE_CHANGELOG.md # what changed between template versions
@@ -72,6 +73,7 @@ from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
 ```bash
 bun run dev        # web (:3000) + convex, in parallel — needs the `muxa` runner (see SETUP)
 bun run check      # lint + typecheck + test (mirrors CI)
+bun run lint       # biome, then every workspace's own lint script (e.g. an Expo app's `expo lint`)
 bun run test       # every workspace's tests, then the scripts' own (scripts/)
 bun run build      # build every workspace
 ```

@@ -1,4 +1,4 @@
-# 0006. Per-environment secret items from a checked-in manifest
+# 0007. Per-environment secret items from a checked-in manifest
 
 **Status:** Accepted
 

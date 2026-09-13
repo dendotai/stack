@@ -102,7 +102,7 @@ if (flags.print === true) {
     console.log(`    ${section.label}`);
     for (const field of section.fields) {
       const kind = field.generate ? "generated" : field.secret ? "secret" : "";
-      console.log(`      ${field.label.padEnd(16)} ${kind.padEnd(10)} ${field.for}`);
+      console.log(`      ${field.label.padEnd(18)} ${kind.padEnd(10)} ${field.for}`);
     }
   }
   console.log("\n  Prefilled values:");

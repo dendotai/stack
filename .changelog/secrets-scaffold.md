@@ -1,6 +1,6 @@
 - **Per-environment secret-manager items come from a manifest**
   (`scripts/secrets.manifest.json`, `scripts/secrets-scaffold.mjs`,
-  `docs/SETUP.md`, [ADR 0006](docs/adr/0006-secret-items-from-a-manifest.md)):
+  `docs/SETUP.md`, [ADR 0007](docs/adr/0007-secret-items-from-a-manifest.md)):
   the manifest names the environments, sections and field labels that every
   `op://…` path in SETUP.md reads from, and the script creates the vault and
   the `<project> dev` / `<project> prod` items from it with the 1Password CLI.

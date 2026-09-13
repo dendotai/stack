@@ -41,6 +41,12 @@ decision being made or discussed — a deliberate choice likely to be re-questio
 later whose rationale isn't in the code — **proactively prompt the user to record
 it as an ADR**; don't let it pass silently.
 
+Public HTTP endpoints — a webhook, a capture URL, an API for scripts — are
+TanStack Start server routes in `apps/web`, on the project's own domain. The
+backend package's public surface is its Convex function API; its HTTP router
+carries only Better Auth's routes and never an app-owned endpoint. See
+[ADR 0006](docs/adr/0006-web-app-owns-public-http-surface.md).
+
 ## Types
 
 The Convex schema is the single source for data shapes — **derive every data
@@ -86,3 +92,18 @@ utilities and components/partials, **not** extracted class-string constants,
 global utility overrides, or `@apply`. When unsure, check the
 [Tailwind docs](https://tailwindcss.com/docs/styling-with-utility-classes)
 instead of inventing. Web specifics live in `apps/web/CLAUDE.md`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (`gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical labels, strings equal to their names, plus the state labels
+the maintenance workflow manages. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one root `CONTEXT.md` (created lazily) + `docs/adr/`. See `docs/agents/domain.md`.
