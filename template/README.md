@@ -66,6 +66,7 @@ tree; CI (`.github/workflows/ci.yml`) runs it on every push and pull request.
 ```bash
 bun run dev        # web (:3000) + convex, in parallel — needs the `muxa` runner (see SETUP)
 bun run check      # lint + typecheck + test (mirrors CI)
+bun run lint       # biome, then every workspace's own lint script (e.g. an Expo app's `expo lint`)
 bun run test       # every workspace's tests, then the init script's (scripts/)
 bun run build      # build every workspace
 ```
