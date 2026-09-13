@@ -12,7 +12,7 @@
     "build": "bun --filter '*' build",
     "typecheck": "bun --filter '*' typecheck",
     "test": "bun --filter '*' test && bun test scripts/",
-    "lint": "biome check .",
+    "lint": "biome check . && bun --filter '*' --if-present lint",
     "format": "biome format --write .",
     "check": "bun run lint && bun run typecheck && bun run test"
   },
