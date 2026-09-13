@@ -139,7 +139,9 @@ To confirm a UI change in the real app (not just tests), **capture signed-in
 screenshots yourself** instead of asking the user:
 
 1. Dev server running (`bun dev` from repo root), reachable at
-   `https://stack.internal` (or set `STACK_BASE_URL`). See `scripts/README.md`.
+   `https://stack.internal` (or set `STACK_BASE_URL`). A checkout with `PORT`
+   set (an agent worktree) serves `http://localhost:<PORT>` instead, and the
+   scripts target it on their own. See `scripts/README.md`.
 2. One-time per session: `cd apps/web && bun run auth:login` — saves a reusable
    Playwright session to `.auth/state.json`. A dedicated test account, with
    `TEST_USER_EMAIL`/`TEST_USER_PASSWORD` in the gitignored `.dev.vars`, makes
