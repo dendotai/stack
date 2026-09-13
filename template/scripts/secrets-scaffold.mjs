@@ -23,6 +23,11 @@
 // exceptions the manifest marks: `generate: true` fields get 32 random bytes,
 // base64 (never printed), and a `value` with `{domain}` is prefilled per
 // environment from the custom domain in `apps/web/wrangler.jsonc`.
+//
+// A field with `issuedAs` is a credential some dashboard creates under a name
+// of its own; the script prints that name (`{project}` and `{env}` filled in)
+// so the dashboard row, the item field and the GitHub secret read as one
+// scheme. The rule behind the names is in docs/SETUP.md, Secrets & environments.
 
 import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
@@ -94,6 +99,24 @@ for (const env of MANIFEST.environments) {
 
 const itemTitle = (env) => `${name} ${env}`;
 
+// One line per credential a dashboard creates under its own name. A name
+// without `{env}` comes out once, since one credential then serves every
+// environment.
+function printIssuedNames() {
+  console.log("\n  Name the credentials in the issuing dashboards:");
+  for (const section of MANIFEST.sections) {
+    for (const field of section.fields) {
+      if (!field.issuedAs) continue;
+      const names = new Set(
+        MANIFEST.environments.map((env) =>
+          field.issuedAs.replaceAll("{project}", name).replaceAll("{env}", env),
+        ),
+      );
+      console.log(`    ${`${section.label}/${field.label}`.padEnd(24)} ${[...names].join(", ")}`);
+    }
+  }
+}
+
 if (flags.print === true) {
   console.log(`\n  One secret-manager item per environment, in the "${vault}" vault:`);
   for (const env of MANIFEST.environments) console.log(`    "${itemTitle(env)}"`);
@@ -112,6 +135,7 @@ if (flags.print === true) {
         console.log(`    "${itemTitle(env)}" ${field.section}/${field.label} = ${field.value}`);
     }
   }
+  printIssuedNames();
   console.log(`\n  Read a value: op://${vault}/${itemTitle("dev")}/<section>/<label>\n`);
   process.exit(0);
 }
@@ -191,6 +215,7 @@ for (const env of MANIFEST.environments) {
   console.log(`    fill in the 1Password app: ${toFill.join(", ")}`);
 }
 
+printIssuedNames();
 console.log(`\n  Read a value: op://${vault}/${itemTitle("dev")}/<section>/<label>`);
 console.log(
   `  e.g. op read "op://${vault}/${itemTitle("dev")}/convex/deploy-key" | gh secret set CONVEX_DEPLOY_KEY --env dev\n`,

@@ -109,6 +109,22 @@ function withFixture(fn) {
 const field = (item, section, label) =>
   item.fields.find((f) => f.section?.id === section && f.label === label);
 
+// The "Name the credentials …" block, as `{ "<section>/<label>": "<names>" }`.
+function issuedNames(stdout) {
+  const block = stdout.split("Name the credentials")[1]?.split("\n\n")[0] ?? "";
+  return Object.fromEntries(
+    block
+      .split("\n")
+      .slice(1)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [path, ...rest] = line.split(/\s{2,}/);
+        return [path, rest.join(" ")];
+      }),
+  );
+}
+
 describe("secrets-scaffold.mjs --print", () => {
   test("prints the checklist without touching op", () => {
     withFixture((dir) => {
@@ -123,6 +139,17 @@ describe("secrets-scaffold.mjs --print", () => {
       expect(stdout).toContain("GitHub secret CLOUDFLARE_API_TOKEN");
       expect(stdout).toContain("https://dev.acme.com");
       expect(stdout).toContain("https://acme.com");
+    });
+  });
+
+  test("lists the name each credential is created under in its dashboard", () => {
+    withFixture((dir) => {
+      const { stdout } = scaffold(dir, ["--print"]);
+
+      expect(issuedNames(stdout)).toEqual({
+        "cloudflare/api-token": "acme-com gha deploy",
+        "convex/deploy-key": "gha-dev, gha-prod",
+      });
     });
   });
 });
@@ -186,6 +213,10 @@ describe("secrets-scaffold.mjs creates the items", () => {
       expect(stdout).not.toContain(prodSecret);
 
       expect(stdout).toContain("op://acme-com/acme-com dev/convex/deploy-key");
+      expect(issuedNames(stdout)).toEqual({
+        "cloudflare/api-token": "acme-com gha deploy",
+        "convex/deploy-key": "gha-dev, gha-prod",
+      });
     });
   });
 
