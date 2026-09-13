@@ -14,7 +14,8 @@
     "test": "bun --filter '*' test && bun test scripts/",
     "lint": "biome check . && bun --filter '*' --if-present lint",
     "format": "biome format --write .",
-    "check": "bun run lint && bun run typecheck && bun run test"
+    "check": "bun run lint && bun run typecheck && bun run test",
+    "worktree:setup": "bun scripts/worktree.mjs setup"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.1",

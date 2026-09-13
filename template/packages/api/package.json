@@ -2,6 +2,10 @@
   "name": "@stack/api",
   "private": true,
   "type": "module",
+  "convex": {
+    "team": "your-convex-team",
+    "project": "your-convex-project"
+  },
   "exports": {
     ".": "./convex/_generated/api.js",
     "./schema": "./convex/schema.ts",

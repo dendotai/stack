@@ -57,8 +57,10 @@ tree; CI (`.github/workflows/ci.yml`) runs it on every push and pull request.
 
 1. `bun install`.
 2. Provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.
-3. Fill the `.dev.vars` / `.env.local` files the init script created, then
-   `cd packages/api && bunx convex dev` once to link your dev deployment.
+3. Put your Convex team and project slugs into `packages/api/package.json`
+   (`convex.team`, `convex.project`), then `bun run worktree:setup` links your
+   dev deployment and writes its lines into the env files the init script
+   created. Fill the rest of `.dev.vars` / `.env.local` by hand.
 
 ## Develop
 
@@ -70,6 +72,7 @@ bun run check      # lint + typecheck + test (mirrors CI)
 bun run lint       # biome, then every workspace's own lint script (e.g. an Expo app's `expo lint`)
 bun run test       # every workspace's tests, then the init script's (scripts/)
 bun run build      # build every workspace
+bun run worktree:setup  # this checkout's own Convex dev deployment + env files (see Worktrees)
 ```
 
 Each workspace's scripts are documented in its own README / `package.json`.
@@ -83,6 +86,29 @@ step.
 `@biomejs/biome` is pinned exactly: `biome.json` declares the schema of that
 version, and a newer CLI reports a mismatch. When you bump the pin, run
 `bunx biome migrate --write` in the same commit.
+
+## Worktrees
+
+`bun run worktree:setup` gives the current checkout a Convex dev deployment of
+its own and writes the env files that point at it, so several checkouts of the
+project — one agent session per git worktree, say — run side by side without
+sharing a deployment or a port. It reads the Convex team and project slugs from
+`packages/api/package.json` (`convex.team`, `convex.project`); the Convex CLI's
+own login on the machine is the credential, and nothing is stored.
+
+In a **git worktree** the deployment is `<team>:<project>:dev/agent/<name>`
+(`<name>` is the worktree directory's name) and expires after 14 days. The
+script sets what the first push needs and nothing more — a generated
+`BETTER_AUTH_SECRET`, `SITE_URL` of the worktree's own localhost origin, and
+placeholder Google client values, so Google sign-in does not work there — and
+pushes once. `apps/web/.dev.vars` gets `PORT` (a free port in 3001–3099; 3000
+is the main checkout's) and `CONVEX_URL`; `apps/web/.env.local` gets
+`VITE_CONVEX_URL`. In the **main checkout** it links your personal dev
+deployment instead, with no expiration and no `PORT`, and sets only the values
+that deployment lacks.
+
+A rerun keeps a deployment that still exists and only refreshes the files;
+when the deployment is gone — expired, or deleted — it creates a new one.
 
 ## Deploy
 
