@@ -76,6 +76,9 @@ const dryRun = flags["dry-run"] === true;
 const wrangler = (await import(pathToFileURL(join(ROOT, "apps/web/wrangler.jsonc")).href)).default;
 const domainOf = (env) => wrangler.env?.[env]?.routes?.[0]?.pattern;
 
+// `{key}` placeholders in a manifest string, filled from `vars`.
+const fill = (template, vars) => template.replace(/\{(\w+)\}/g, (m, key) => vars[key] ?? m);
+
 const fieldsOf = (env) => {
   const domain = domainOf(env);
   return MANIFEST.sections.flatMap((section) =>
@@ -84,7 +87,7 @@ const fieldsOf = (env) => {
       label: field.label,
       secret: field.secret === true,
       generate: field.generate === true,
-      value: field.value && domain ? field.value.replaceAll("{domain}", domain) : "",
+      value: field.value && domain ? fill(field.value, { domain }) : "",
     })),
   );
 };
@@ -99,21 +102,24 @@ for (const env of MANIFEST.environments) {
 
 const itemTitle = (env) => `${name} ${env}`;
 
-// One line per credential a dashboard creates under its own name. A name
-// without `{env}` comes out once, since one credential then serves every
+// A name without `{env}` comes out once: one credential then serves every
 // environment.
 function printIssuedNames() {
+  const rows = MANIFEST.sections.flatMap((section) =>
+    section.fields
+      .filter((field) => field.issuedAs)
+      .map((field) => {
+        const names = new Set(
+          MANIFEST.environments.map((env) => fill(field.issuedAs, { project: name, env })),
+        );
+        return [`${section.label}/${field.label}`, [...names].join(", "), field.for];
+      }),
+  );
+  if (rows.length === 0) return;
+  const width = (i) => Math.max(...rows.map((row) => row[i].length)) + 2;
   console.log("\n  Name the credentials in the issuing dashboards:");
-  for (const section of MANIFEST.sections) {
-    for (const field of section.fields) {
-      if (!field.issuedAs) continue;
-      const names = new Set(
-        MANIFEST.environments.map((env) =>
-          field.issuedAs.replaceAll("{project}", name).replaceAll("{env}", env),
-        ),
-      );
-      console.log(`    ${`${section.label}/${field.label}`.padEnd(24)} ${[...names].join(", ")}`);
-    }
+  for (const [path, names, target] of rows) {
+    console.log(`    ${path.padEnd(width(0))}${names.padEnd(width(1))}${target}`);
   }
 }
 

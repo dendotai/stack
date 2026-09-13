@@ -105,11 +105,12 @@ is possible, and nobody does it. `gha` names the consumer, GitHub Actions.
 |---|---|---|
 | Cloudflare API token ([§1](#1-cloudflare-account--domain)) | account-global | `<project> gha deploy` — no env part: one token serves both environments |
 | Convex deploy key ([§2](#2-convex-two-deployments)) | the deployment's own | `gha-dev` / `gha-prod` |
-| Google OAuth client ([§3](#3-google-sign-in)) | the product's own Google Cloud project | `<product> dev` / `<product> prod` |
 
-The manifest carries these names as `issuedAs`, and the scaffold script prints
-them with `--print` and after creating the items, so the dashboard row, the item
-field and the GitHub secret read as one scheme.
+The Google OAuth clients take no prefix: they live in the product's own Google
+Cloud project ([§3](#3-google-sign-in)). The manifest carries the two names
+above as `issuedAs`, and the scaffold script prints them next to the item field
+and the GitHub secret, with `--print` and after creating the items, so the three
+read as one scheme.
 
 **Why split per env:** the environment is the dominant axis (most fields differ
 dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub
@@ -358,7 +359,7 @@ the workflow selects the right environment per branch (`main` → `prod`, otherw
 
 | Name | Value |
 |---|---|
-| `CLOUDFLARE_API_TOKEN` | the token from §1 (same for both) |
+| `CLOUDFLARE_API_TOKEN` | the token from §1 (`<project> gha deploy`, same for both) |
 | `CONVEX_DEPLOY_KEY` | the env's Convex deploy key (`gha-dev` / `gha-prod`) |
 
 The worker gets no auth secrets: Better Auth runs inside the Convex deployment

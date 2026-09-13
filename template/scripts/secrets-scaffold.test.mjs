@@ -109,21 +109,26 @@ function withFixture(fn) {
 const field = (item, section, label) =>
   item.fields.find((f) => f.section?.id === section && f.label === label);
 
-// The "Name the credentials …" block, as `{ "<section>/<label>": "<names>" }`.
+// The rows of the "Name the credentials …" block, columns split on the
+// two-space gutter the script pads them with.
 function issuedNames(stdout) {
   const block = stdout.split("Name the credentials")[1]?.split("\n\n")[0] ?? "";
-  return Object.fromEntries(
-    block
-      .split("\n")
-      .slice(1)
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const [path, ...rest] = line.split(/\s{2,}/);
-        return [path, rest.join(" ")];
-      }),
-  );
+  return block
+    .split("\n")
+    .slice(1)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.split(/\s{2,}/));
 }
+
+const ISSUED_NAMES = [
+  [
+    "cloudflare/api-token",
+    "acme-com gha deploy",
+    "GitHub secret CLOUDFLARE_API_TOKEN (same value in both items)",
+  ],
+  ["convex/deploy-key", "gha-dev, gha-prod", "GitHub secret CONVEX_DEPLOY_KEY"],
+];
 
 describe("secrets-scaffold.mjs --print", () => {
   test("prints the checklist without touching op", () => {
@@ -146,10 +151,7 @@ describe("secrets-scaffold.mjs --print", () => {
     withFixture((dir) => {
       const { stdout } = scaffold(dir, ["--print"]);
 
-      expect(issuedNames(stdout)).toEqual({
-        "cloudflare/api-token": "acme-com gha deploy",
-        "convex/deploy-key": "gha-dev, gha-prod",
-      });
+      expect(issuedNames(stdout)).toEqual(ISSUED_NAMES);
     });
   });
 });
@@ -213,10 +215,7 @@ describe("secrets-scaffold.mjs creates the items", () => {
       expect(stdout).not.toContain(prodSecret);
 
       expect(stdout).toContain("op://acme-com/acme-com dev/convex/deploy-key");
-      expect(issuedNames(stdout)).toEqual({
-        "cloudflare/api-token": "acme-com gha deploy",
-        "convex/deploy-key": "gha-dev, gha-prod",
-      });
+      expect(issuedNames(stdout)).toEqual(ISSUED_NAMES);
     });
   });
 
