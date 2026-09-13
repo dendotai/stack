@@ -44,10 +44,23 @@ prints the section without writing.
 It has no cloud Convex project, no Cloudflare Worker, and no GitHub
 environment secrets, and none may be created for it. A change that needs a
 running Convex backend (routes, components, push-time checks, codegen) uses
-a local anonymous deployment: `CONVEX_AGENT_MODE=anonymous bunx convex dev`
-inside `template/packages/api`, then `bunx convex env set` for the variables
-in `template/docs/SETUP.md`. Acceptance passes run against that. "Deployed"
-is proven by downstream products, not here.
+a local anonymous deployment inside `template/packages/api`. The push checks
+that four values exist on the deployment and nothing more, so placeholders
+are enough: no real Google client, no secret manager.
+
+```bash
+CONVEX_AGENT_MODE=anonymous bunx convex dev --once
+bunx convex env set BETTER_AUTH_SECRET placeholder
+bunx convex env set SITE_URL http://localhost:3000
+bunx convex env set GOOGLE_CLIENT_ID placeholder
+bunx convex env set GOOGLE_CLIENT_SECRET placeholder
+CONVEX_AGENT_MODE=anonymous bunx convex dev --once
+```
+
+The first run creates the deployment and stops at the push with
+`<name> is not set on this Convex deployment`; `env set` cannot create the
+deployment on its own. The second run pushes. Acceptance passes run against
+that. "Deployed" is proven by downstream products, not here.
 
 ## Reading issues
 
