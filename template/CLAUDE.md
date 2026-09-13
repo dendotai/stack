@@ -41,6 +41,12 @@ decision being made or discussed — a deliberate choice likely to be re-questio
 later whose rationale isn't in the code — **proactively prompt the user to record
 it as an ADR**; don't let it pass silently.
 
+Public HTTP endpoints — a webhook, a capture URL, an API for scripts — are
+TanStack Start server routes in `apps/web`, on the project's own domain. The
+backend package's public surface is its Convex function API; its HTTP router
+carries only Better Auth's routes and never an app-owned endpoint. See
+[ADR 0006](docs/adr/0006-web-app-owns-public-http-surface.md).
+
 ## Types
 
 The Convex schema is the single source for data shapes — **derive every data
