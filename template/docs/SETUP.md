@@ -161,8 +161,10 @@ credential cannot reach prod sign-in.
 
 Each client's id and secret go to **that environment's Convex deployment** as
 `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` ([§2](#deployment-env-vars)), and to
-that environment's secret-manager item under a `google`
-section ([Secrets & environments](#secrets--environments)).
+that environment's secret-manager item under a `google` section as
+`web.client-id` (text) and `web.client-secret` (password). The `web.` prefix
+names the consumer, so a later client for another app sits beside it in the
+same section ([Secrets & environments](#secrets--environments)).
 
 Registering several redirect URIs on one client is harmless. Which one is live
 is deployment config, not Google config.
@@ -250,19 +252,37 @@ How secrets are organized (the approach this stack uses in production):
 
 **Rules**
 
+- **One section per provider (`convex`, `cloudflare`, `google`), field labels
+  inside it.** Written here as `<section> / <label>`, which is also how the
+  CLI addresses a field: `op://<item>/<section>/<label>`.
+- **No spaces in field labels.** `.` separates namespace elements, `-` separates
+  words within an element: `deploy-key`, `api-token`, `web.client-id`,
+  `fcm.service-account`. Spaceless labels stay clean in secret references
+  (`op://` paths) and greppable in docs and scripts, and the two separators
+  carry distinct meaning: element boundary versus word boundary.
+- **Prefix the label with its consumer where a provider section can hold more
+  than one credential** — `google / web.client-id`, later `google / ios.client-id`
+  or `google / fcm.service-account`. Name the consumer after the `apps/`
+  directory it authenticates (`web` for `apps/web`), or after the service
+  that holds the credential when no app does (`fcm`). A provider with one
+  credential per item (`convex / deploy-key`) takes no prefix.
+- **Every label states the credential's role**, so its permissions are
+  predictable without opening the issuing dashboard: `deploy-key`, `api-token`,
+  `auth-secret` — never a bare `key`, `token` or `secret`.
 - **Field labels carry no env qualifier** — the item name already encodes the
-  environment. Inside `<project> dev`, `convex / deploy key` unambiguously means
+  environment. Inside `<project> dev`, `convex / deploy-key` unambiguously means
   the dev key.
-- **Genuinely account-level fields** (`cloudflare account-id`, `cloudflare api token`)
+- **Genuinely account-level fields** (`cloudflare / account-id`, `cloudflare / api-token`)
   are either duplicated into both env items (low-churn, the default) or pulled into
   a small `<project> shared` item for zero duplication.
 - **`convex / auth-secret` (the deployment's `BETTER_AUTH_SECRET`) is split
   per-env on purpose** so a dev leak can't forge prod sessions.
-- **A `google` section in each env item holds `client-id` and `client-secret`**
-  — that environment's own OAuth client ([§3](#3-google-sign-in)). Two clients,
-  two pairs of values, one pair per item; nothing is shared between them.
-- Everything else genuinely differs per env: Convex deployment/url/key, app
-  site-url.
+- **A `google` section in each env item holds `web.client-id` and
+  `web.client-secret`** — that environment's own OAuth client
+  ([§3](#3-google-sign-in)). Two clients, two pairs of values, one pair per
+  item; nothing is shared between them.
+- Everything else genuinely differs per env: Convex deployment/url/deploy-key,
+  app site-url.
 
 **Why split per env:** the environment is the dominant axis (most fields differ
 dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub
@@ -273,9 +293,11 @@ chance of grabbing a dev value for prod, and prod keeps its blast-radius isolati
 manager's CLI (the examples use the 1Password CLI `op`):
 
 ```bash
-op read "op://<project> dev/convex/deploy key" | gh secret set CONVEX_DEPLOY_KEY --env dev
+op read "op://<project> dev/convex/deploy-key" | gh secret set CONVEX_DEPLOY_KEY --env dev
+op read "op://<project> prod/cloudflare/api-token" | gh secret set CLOUDFLARE_API_TOKEN --env prod
 # Convex deployment variables go to the deployment, not to GitHub:
 op read "op://<project> prod/convex/auth-secret" | xargs bunx convex env set --prod BETTER_AUTH_SECRET
+op read "op://<project> dev/google/web.client-secret" | xargs bunx convex env set GOOGLE_CLIENT_SECRET
 # variables are not secret:
 gh variable set CONVEX_URL --env prod --body "https://<prod>.convex.cloud"
 ```
