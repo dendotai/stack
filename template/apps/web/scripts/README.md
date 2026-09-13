@@ -14,7 +14,9 @@ Make sure the dev server is running (`bun dev` from the repo root) and reachable
 at `https://stack.internal` (a Caddy/Tailscale dev origin — the
 [`@den-ai/devsite`](https://www.npmjs.com/package/@den-ai/devsite) plugin
 registers it, see `docs/SETUP.md`; or point `STACK_BASE_URL` at the
-`http://localhost:<port>` URL the dev server prints). Then:
+`http://localhost:<port>` URL the dev server prints). In a checkout that sets
+`PORT` (an agent worktree, see `.env.local.example`), the scripts target
+`http://localhost:<PORT>` on their own. Then:
 
 ```bash
 cd apps/web
@@ -53,8 +55,9 @@ not found* (reached the app, but the Sign out button's role or name moved).
 ## Notes
 
 - Re-run `bun run auth:login` when `screenshots` reports the session expired.
-- Override the origin with `STACK_BASE_URL` (e.g. to hit the plain `localhost`
-  URL, though the session cookie is scoped to the origin you signed in on).
+- The origin is, in order: `STACK_BASE_URL` if set; `http://localhost:<PORT>`
+  when `PORT` is set; else `https://stack.internal`. The session cookie is
+  scoped to the origin you signed in on, so sign in again after changing it.
 - Browsers are installed on demand by Playwright; if a run complains about a
   missing browser, run `bunx playwright install chromium`.
 - As you add routes, extend `DEFAULT_ROUTES` in `screenshot.mjs` so the no-arg
