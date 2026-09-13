@@ -278,9 +278,10 @@ if (commit && rewritten.length > 0) {
 console.log("\n  Next:");
 console.log("   1. Edit display strings: grep -rn '\\bstack\\b' --exclude-dir=node_modules .");
 console.log("   2. bun install");
-console.log("   3. Follow docs/SETUP.md to provision Cloudflare / Convex / GitHub.");
-console.log("   4. Fill the .dev.vars / .env.local files this script created.");
-console.log("   5. cd packages/api && bunx convex dev   (links your dev deployment)\n");
+console.log("   3. bun scripts/secrets-scaffold.mjs   (per-env secret-manager items)");
+console.log("   4. Follow docs/SETUP.md to provision Cloudflare / Convex / GitHub.");
+console.log("   5. Fill the .dev.vars / .env.local files this script created.");
+console.log("   6. cd packages/api && bunx convex dev   (links your dev deployment)\n");
 
 if (failure) {
   warn(failure);

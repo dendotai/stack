@@ -16,10 +16,90 @@ from `main`.
   with labeled output. If you don't have `muxa`, replace the `dev` script with
   any parallel runner — or just run the two in separate terminals:
   `bun --filter @stack/web dev` and `cd packages/api && bunx convex dev`.
-- **A password manager with a CLI** for piping secrets into GitHub without
-  printing them (examples below use the 1Password CLI `op`; see
-  [Secrets & environments](#secrets--environments)).
+- **A secret manager with a CLI** for piping secrets into GitHub and Convex
+  without printing them. `scripts/secrets-scaffold.mjs` creates the items for
+  the 1Password CLI `op`; any other manager builds them by hand from its
+  `--print` output (see [Secrets & environments](#secrets--environments)).
 - Accounts: Cloudflare, Convex, GitHub.
+
+---
+
+## Secrets & environments
+
+Every value the sections below produce goes into the secret manager first and
+is piped from there — never pasted through the terminal or an agent. The
+layout: the project's own vault, **one item per environment** — `<project> dev`
+and `<project> prod` — a section per service, and field labels with no
+environment qualifier (the item name carries it). The shape is the checked-in
+[`scripts/secrets.manifest.json`](../scripts/secrets.manifest.json); it is the
+source of truth for every `op://…` path in this file.
+
+Create both items from it **before §1**, so each value has a home when you get
+it:
+
+```bash
+bun scripts/secrets-scaffold.mjs           # 1Password CLI `op`, signed in
+bun scripts/secrets-scaffold.mjs --print   # any other secret manager: build by hand
+```
+
+The script creates the vault when it is missing (named after the project;
+`--vault` overrides), then one item per environment with every field empty for
+you to fill in the manager's UI — except `convex / auth-secret`, generated on
+the spot and never printed, and `app / site-url`, prefilled from the custom
+domain in `apps/web/wrangler.jsonc`. It stops without writing when an item
+already exists; `--dry-run` shows the plan.
+
+**Rules**
+
+- **One section per provider (`convex`, `cloudflare`, `google`), field labels
+  inside it.** Written here as `<section> / <label>`, which is also how the
+  CLI addresses a field: `op://<vault>/<item>/<section>/<label>`.
+- **No spaces in field labels.** `.` separates namespace elements, `-` separates
+  words within an element: `deploy-key`, `api-token`, `web.client-id`,
+  `fcm.service-account`. Spaceless labels stay clean in secret references
+  (`op://` paths) and greppable in docs and scripts, and the two separators
+  carry distinct meaning: element boundary versus word boundary.
+- **Prefix the label with its consumer where a provider section can hold more
+  than one credential** — `google / web.client-id`, later `google / ios.client-id`
+  or `google / fcm.service-account`. Name the consumer after the `apps/`
+  directory it authenticates (`web` for `apps/web`), or after the service
+  that holds the credential when no app does (`fcm`). A provider with one
+  credential per item (`convex / deploy-key`) takes no prefix.
+- **Every label states the credential's role**, so its permissions are
+  predictable without opening the issuing dashboard: `deploy-key`, `api-token`,
+  `auth-secret` — never a bare `key`, `token` or `secret`.
+- **Field labels carry no env qualifier** — inside `<project> dev`,
+  `convex / deploy-key` unambiguously means the dev key.
+- **Account-level values** (`cloudflare / account-id`, `cloudflare / api-token`)
+  are duplicated into both env items. They rarely change, and one path form
+  then covers every value.
+- **`convex / auth-secret` (the deployment's `BETTER_AUTH_SECRET`) is split
+  per-env on purpose** so a dev leak can't forge prod sessions.
+- **The `google` section in each env item holds `web.client-id` and
+  `web.client-secret`** — that environment's own OAuth client
+  ([§3](#3-google-sign-in)). Two clients, two pairs of values, one pair per
+  item; nothing is shared between them.
+
+**Why split per env:** the environment is the dominant axis (most fields differ
+dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub
+`prod` environment ← `<project> prod` — so values copy straight across with no
+chance of grabbing a dev value for prod, and prod keeps its blast-radius isolation.
+
+**Never paste secret values through the terminal/agent.** Pipe from the
+manager; with `op`, the vault is the project name unless you passed `--vault`:
+
+```bash
+op read "op://<vault>/<project> dev/convex/deploy-key" | gh secret set CONVEX_DEPLOY_KEY --env dev
+op read "op://<vault>/<project> prod/cloudflare/api-token" | gh secret set CLOUDFLARE_API_TOKEN --env prod
+# Convex deployment variables go to the deployment, not to GitHub:
+op read "op://<vault>/<project> prod/convex/auth-secret" | xargs bunx convex env set --prod BETTER_AUTH_SECRET
+op read "op://<vault>/<project> dev/google/web.client-secret" | xargs bunx convex env set GOOGLE_CLIENT_SECRET
+# variables are not secret:
+gh variable set CONVEX_URL --env prod --body "$(op read "op://<vault>/<project> prod/convex/url")"
+```
+
+CI deploy keys carry only the scopes the workflow uses — for Convex,
+`deployment:deploy` + `deployment:data:view` ([§2](#deploy-key-scopes)).
 
 ---
 
@@ -29,7 +109,8 @@ from `main`.
 - Add your domain as a **zone** (Add a Site → enter the apex → Free plan).
 - Update nameservers at your registrar to Cloudflare's (the dashboard shows them).
 - Wait for **Active** status (usually <1h).
-- Note your **Account ID** (dashboard right sidebar) → GitHub variable `CLOUDFLARE_ACCOUNT_ID`.
+- Note your **Account ID** (dashboard right sidebar) → `cloudflare / account-id`
+  in both items → GitHub variable `CLOUDFLARE_ACCOUNT_ID`.
 - Create an **API token** with:
   - Account → Workers Scripts: **Edit**
   - Account → Account Settings: **Read**
@@ -39,7 +120,8 @@ from `main`.
     [§3](#local-google-callbacks-the-cloudflare-redirect-hop). The dashboard picker calls it
     "Single Redirect"; the docs call the product "Dynamic URL Redirect".
   - (Template "Edit Cloudflare Workers" + add the DNS and Single Redirect scopes.)
-  - Save the value → GitHub secret `CLOUDFLARE_API_TOKEN` (the same token works for both environments).
+  - Save the value → `cloudflare / api-token` in both items → GitHub secret
+    `CLOUDFLARE_API_TOKEN` (the same token works for both environments).
 
 ### Custom domains bind automatically
 
@@ -57,11 +139,14 @@ its DNS. Subdomains (`dev.<domain>`) are usually clean; see
 - Create a project. You get a **dev deployment** automatically.
 - Create a **production deployment** (project Settings → Production deployment).
 - Generate **deploy keys** for both (Settings → Deploy keys → New):
-  - dev key → GitHub `dev` env secret `CONVEX_DEPLOY_KEY`.
-  - prod key → GitHub `prod` env secret `CONVEX_DEPLOY_KEY`.
+  - dev key → `convex / deploy-key` in `<project> dev` → GitHub `dev` env
+    secret `CONVEX_DEPLOY_KEY`.
+  - prod key → `convex / deploy-key` in `<project> prod` → GitHub `prod` env
+    secret `CONVEX_DEPLOY_KEY`.
   - Scope each key to what CI runs, nothing more — the set is in
     [Deploy-key scopes](#deploy-key-scopes) below.
-- Note each deployment's **HTTPS URL** → GitHub variable `CONVEX_URL` (per env).
+- Note each deployment's name and **HTTPS URL** → `convex / deployment` and
+  `convex / url` in that env's item → GitHub variable `CONVEX_URL` (per env).
 - Locally: `cd packages/api && bunx convex dev` does an interactive browser login
   and links your dev deployment (no key stored locally).
 
@@ -98,7 +183,7 @@ required ones fails outright, by design: `BETTER_AUTH_SECRET`, `SITE_URL`,
 
 | Variable | Value | Why |
 |---|---|---|
-| `BETTER_AUTH_SECRET` | `openssl rand -base64 32`, one per deployment | signs Better Auth sessions; split per env so a dev leak can't forge prod sessions |
+| `BETTER_AUTH_SECRET` | `convex / auth-secret` of that env's item, generated by the scaffold script, one per deployment | signs Better Auth sessions; split per env so a dev leak can't forge prod sessions |
 | `SITE_URL` | the web app's **deployed** origin for that env (dev: `https://dev.<domain>`, prod: `https://<domain>`) | Better Auth's `baseURL`. Exactly one origin; a second front goes in `AUTH_TRUSTED_ORIGINS` below |
 | `AUTH_DISABLE_SIGNUP` | `true` to close a deployment; unset while bootstrapping | refuses **new** email/password registrations and hides the form's create-account control; existing users keep signing in |
 | `GOOGLE_CLIENT_ID` | that environment's own OAuth client id ([§3](#3-google-sign-in)) | Google sign-in; required, so a push without it fails |
@@ -114,15 +199,14 @@ Set it only while exactly one trusted front cannot name itself.
 
 ```bash
 cd packages/api
-bunx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
+op read "op://<vault>/<project> dev/convex/auth-secret" | xargs bunx convex env set BETTER_AUTH_SECRET
 bunx convex env set SITE_URL https://dev.<domain>
 bunx convex env set GOOGLE_CLIENT_ID <the dev client id>
-bunx convex env set GOOGLE_CLIENT_SECRET <the dev client secret>
+op read "op://<vault>/<project> dev/google/web.client-secret" | xargs bunx convex env set GOOGLE_CLIENT_SECRET
 bunx convex env set AUTH_TRUSTED_ORIGINS https://<project>.internal
 bunx convex env set GOOGLE_REDIRECT_URI https://internal.<domain>/api/auth/callback/google
 # …and again with --prod using the prod values, minus the two dev-only rows.
-# Pipe the secret from your password manager rather than typing it — see
-# Secrets & environments below.
+# Secrets are piped from the manager, never typed — see Secrets & environments.
 ```
 
 **Both dev fronts run against the one dev deployment.** `SITE_URL` is the
@@ -236,74 +320,6 @@ and reads its own variables there ([§2](#deployment-env-vars)).
 - `cp apps/web/.env.local.example apps/web/.env.local` and set
   `VITE_CONVEX_URL` to your dev deployment (embedded into local builds).
 - `cd packages/api && bunx convex dev` once to link the dev deployment.
-
----
-
-## Secrets & environments
-
-How secrets are organized (the approach this stack uses in production):
-
-1. **Cross-project / shared infra secrets → a single umbrella vault** (one
-   password manager vault you keep across projects). Anything not tied to one
-   project — e.g. an account-level API credential reused everywhere.
-2. **Project secrets → the project's own vault, one item per environment** —
-   `<project> dev` and `<project> prod`. **Not** a single combined doc with
-   env-suffixed fields.
-
-**Rules**
-
-- **One section per provider (`convex`, `cloudflare`, `google`), field labels
-  inside it.** Written here as `<section> / <label>`, which is also how the
-  CLI addresses a field: `op://<item>/<section>/<label>`.
-- **No spaces in field labels.** `.` separates namespace elements, `-` separates
-  words within an element: `deploy-key`, `api-token`, `web.client-id`,
-  `fcm.service-account`. Spaceless labels stay clean in secret references
-  (`op://` paths) and greppable in docs and scripts, and the two separators
-  carry distinct meaning: element boundary versus word boundary.
-- **Prefix the label with its consumer where a provider section can hold more
-  than one credential** — `google / web.client-id`, later `google / ios.client-id`
-  or `google / fcm.service-account`. Name the consumer after the `apps/`
-  directory it authenticates (`web` for `apps/web`), or after the service
-  that holds the credential when no app does (`fcm`). A provider with one
-  credential per item (`convex / deploy-key`) takes no prefix.
-- **Every label states the credential's role**, so its permissions are
-  predictable without opening the issuing dashboard: `deploy-key`, `api-token`,
-  `auth-secret` — never a bare `key`, `token` or `secret`.
-- **Field labels carry no env qualifier** — the item name already encodes the
-  environment. Inside `<project> dev`, `convex / deploy-key` unambiguously means
-  the dev key.
-- **Genuinely account-level fields** (`cloudflare / account-id`, `cloudflare / api-token`)
-  are either duplicated into both env items (low-churn, the default) or pulled into
-  a small `<project> shared` item for zero duplication.
-- **`convex / auth-secret` (the deployment's `BETTER_AUTH_SECRET`) is split
-  per-env on purpose** so a dev leak can't forge prod sessions.
-- **A `google` section in each env item holds `web.client-id` and
-  `web.client-secret`** — that environment's own OAuth client
-  ([§3](#3-google-sign-in)). Two clients, two pairs of values, one pair per
-  item; nothing is shared between them.
-- Everything else genuinely differs per env: Convex deployment/url/deploy-key,
-  app site-url.
-
-**Why split per env:** the environment is the dominant axis (most fields differ
-dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub
-`prod` environment ← `<project> prod` — so values copy straight across with no
-chance of grabbing a dev value for prod, and prod keeps its blast-radius isolation.
-
-**Never paste secret values through the terminal/agent.** Pipe from the
-manager's CLI (the examples use the 1Password CLI `op`):
-
-```bash
-op read "op://<project> dev/convex/deploy-key" | gh secret set CONVEX_DEPLOY_KEY --env dev
-op read "op://<project> prod/cloudflare/api-token" | gh secret set CLOUDFLARE_API_TOKEN --env prod
-# Convex deployment variables go to the deployment, not to GitHub:
-op read "op://<project> prod/convex/auth-secret" | xargs bunx convex env set --prod BETTER_AUTH_SECRET
-op read "op://<project> dev/google/web.client-secret" | xargs bunx convex env set GOOGLE_CLIENT_SECRET
-# variables are not secret:
-gh variable set CONVEX_URL --env prod --body "https://<prod>.convex.cloud"
-```
-
-CI deploy keys carry only the scopes the workflow uses — for Convex,
-`deployment:deploy` + `deployment:data:view` ([§2](#deploy-key-scopes)).
 
 ---
 
