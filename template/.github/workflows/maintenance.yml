@@ -1,4 +1,4 @@
-name: Maintenance
+name: maintenance
 
 # All lightweight repo-hygiene automation lives in this one workflow — one job
 # per concern, each gated on its own trigger/condition — so hygiene doesn't
