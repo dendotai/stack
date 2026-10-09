@@ -1,12 +1,13 @@
-name: Deploy
+name: deploy
 
 on:
   push:
     branches: [main, dev]
     # Docs-only pushes don't change the shipped worker (docs/, *.md, and these
-    # root files aren't bundled into the build), so skip the no-op deploy. CI
-    # still runs on these via ci.yml. Note: a push touching ONLY these paths is
-    # skipped entirely — fine because deploy isn't a required status check.
+    # root files aren't bundled into the build), so skip the no-op deploy. The
+    # test and build workflows still run on these. Note: a push touching ONLY
+    # these paths is skipped entirely — fine because deploy isn't a required
+    # status check.
     paths-ignore:
       - "**.md"
       - "docs/**"
@@ -26,6 +27,9 @@ concurrency:
 
 jobs:
   deploy:
+    # The env suffix shows which environment a commit deployed to, so the dev
+    # deploy check listed on a dev→main PR does not read as a prod deploy.
+    name: deploy (${{ github.ref_name == 'main' && 'prod' || 'dev' }})
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
     env:
