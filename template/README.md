@@ -32,7 +32,7 @@ template into projects created from it.
 │   ├── SETUP.md          # external setup: Cloudflare, Convex, GitHub, secrets
 │   ├── adr/              # architecture decision records
 │   └── agents/           # config the agent skills read: issue tracker, labels, domain docs
-├── .github/workflows/    # ci.yml (checks) + deploy.yml (push-to-deploy)
+├── .github/workflows/    # test.yml + build.yml (checks), deploy.yml (push-to-deploy)
 ├── VERSION               # template version this tree is at
 └── TEMPLATE_CHANGELOG.md # what changed between template versions
 ```
@@ -56,7 +56,8 @@ script leaves display strings (the landing `<h1>`, the page `<title>`, this
 README) — `grep -rn '\bstack\b'` and edit by taste.
 
 `bun scripts/init.mjs --check` fails when any placeholder is still in the
-tree; CI (`.github/workflows/ci.yml`) runs it on every push and pull request.
+tree; the `test` workflow (`.github/workflows/test.yml`) runs it on every push
+and pull request.
 
 `bun scripts/secrets-scaffold.mjs` creates the per-environment secret-manager
 items (`<project> dev`, `<project> prod`) from `scripts/secrets.manifest.json` with
