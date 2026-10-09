@@ -1,0 +1,7 @@
+- **One import alias, `@/`** (`apps/web`): `@/*` maps to `src/*` and is the
+  only alias. The `#/*` subpath import is gone from `package.json` and
+  `tsconfig.json`, and the `components.json` aliases that `shadcn add` writes
+  into new components use `@/`. `vitest.config.ts` now sets
+  `resolve: { tsconfigPaths: true }`, so an `@/` import resolves in tests as it
+  already did in `vite.config.ts`. To apply: change any `#/` import to `@/`
+  and copy the four files' alias lines.
