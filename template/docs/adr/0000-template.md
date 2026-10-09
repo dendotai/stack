@@ -17,3 +17,8 @@ What we decided to do, stated plainly.
 - **Accepted trade-off:** what we knowingly give up.
 - **Open:** what's still unresolved or may be revisited (and under what
   constraints).
+
+## Rejected
+
+Options examined and declined, each with the reason it lost. Drop this section
+unless a declined option is likely to be proposed again.
