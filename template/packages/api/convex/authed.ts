@@ -4,9 +4,7 @@ import type { QueryCtx } from "./_generated/server";
 // biome-ignore lint/style/noRestrictedImports: this module *defines* the authed wrappers, so it must build on the raw query/mutation.
 import { mutation, query } from "./_generated/server";
 
-// Resolve the identity → users row once, on ctx, so handlers don't each repeat
-// getUserIdentity() → index lookup. Two flavors preserve a deliberate
-// query/mutation asymmetry:
+// Resolve the identity → users row once, on ctx, so handlers don't each repeat getUserIdentity() → index lookup. Two flavors preserve a deliberate query/mutation asymmetry:
 //
 //   authedQuery   — throws "Not authenticated" when there's no identity, then
 //                   exposes `user: Doc<"users"> | null`. Reads tolerate a
@@ -15,8 +13,7 @@ import { mutation, query } from "./_generated/server";
 //   authedMutation — additionally throws "User not found" when the row is
 //                   missing, guaranteeing `user` is non-null in the handler.
 
-// The identity's subject is the Better Auth user id (ADR 0004) — the same value
-// `createFromAuthUser` writes to `authUserId`.
+// The identity's subject is the Better Auth user id (ADR 0004) — the same value `createFromAuthUser` writes to `authUserId`.
 async function resolveUser(
   ctx: QueryCtx,
   identity: { subject: string },

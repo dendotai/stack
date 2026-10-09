@@ -13,18 +13,14 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-// The tree the script reads: the project name and the two custom domains.
-// Built rather than copied, so the tests do not depend on this project's own
-// wrangler config.
+// The tree the script reads: the project name and the two custom domains. Built rather than copied, so the tests do not depend on this project's own wrangler config.
 const FIXTURE = {
   "package.json": '{\n  "name": "acme-com"\n}\n',
   "apps/web/wrangler.jsonc":
     '{\n  // comments are allowed here\n  "name": "acme-com",\n  "env": {\n    "dev": { "routes": [{ "pattern": "dev.acme.com", "custom_domain": true }] },\n    "prod": { "routes": [{ "pattern": "acme.com", "custom_domain": true }] }\n  }\n}\n',
 };
 
-// A stand-in `op` on PATH. It records every call (argv and stdin) and answers
-// the read commands from environment variables, so a test declares which
-// vaults and items already exist.
+// A stand-in `op` on PATH. It records every call (argv and stdin) and answers the read commands from environment variables, so a test declares which vaults and items already exist.
 const OP_STUB = `#!/bin/sh
 n=$(ls "$OP_CALLS" | wc -l | tr -d ' ')
 n=$((n / 2 + 1))

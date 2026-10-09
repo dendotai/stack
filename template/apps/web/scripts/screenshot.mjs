@@ -4,8 +4,7 @@
 //   bun run screenshots /home     # with args: capture only the route(s) you name
 //   bun run screenshots           # no args: sweep /home
 //
-// Output PNGs land in `screenshots/` (gitignored). Exits non-zero if the session
-// has expired, so callers can tell a redirect-to-login apart from a real capture.
+// Output PNGs land in `screenshots/` (gitignored). Exits non-zero if the session has expired, so callers can tell a redirect-to-login apart from a real capture.
 
 import { existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -41,8 +40,7 @@ const context = await browser.newContext({
 const page = await context.newPage();
 
 async function capture(route) {
-  // The app holds a live Convex WebSocket, so "networkidle" never settles —
-  // wait for the document + the authed nav, then a short beat for assets.
+  // The app holds a live Convex WebSocket, so "networkidle" never settles — wait for the document + the authed nav, then a short beat for assets.
   await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded" });
   if (isLoginUrl(page.url())) {
     console.error(

@@ -45,6 +45,7 @@ yarn-error.log*
 *.pem
 .vscode/*
 !.vscode/tasks.json
+!.vscode/settings.json
 .idea/
 
 # turbo / nx (if added later)

@@ -1,10 +1,7 @@
 #!/usr/bin/env bun
-// Cuts a template release: folds `.changelog/` into a new version section of
-// `template/TEMPLATE_CHANGELOG.md`, bumps `template/VERSION`, and empties the
-// directory.
+// Cuts a template release: folds `.changelog/` into a new version section of `template/TEMPLATE_CHANGELOG.md`, bumps `template/VERSION`, and empties the directory.
 //
-// `.changelog/` *is* the Unreleased section — one file per entry, so two open
-// pull requests never edit the same line (the conflict this replaced).
+// `.changelog/` *is* the Unreleased section — one file per entry, so two open pull requests never edit the same line (the conflict this replaced).
 //
 //   bun scripts/release-template.mjs 1.1.0 [--date 2026-09-12] [--dry-run]
 
@@ -52,10 +49,7 @@ if (firstDifference === -1 || parts(version)[firstDifference] < parts(current)[f
 const files = readdirSync(ENTRIES_DIR).filter((name) => name.endsWith(".md"));
 if (files.length === 0) fail(`${ENTRIES_DIR} holds no entries — nothing to release`);
 
-// The changelog reads newest first, and an agent applying a version's entries
-// works up from the oldest. History order — not the commit timestamp — gives
-// that: two entries committed in the same second still have an order here.
-// A file no commit has added yet is the newest there is.
+// The changelog reads newest first, and an agent applying a version's entries works up from the oldest. History order — not the commit timestamp — gives that: two entries committed in the same second still have an order here. A file no commit has added yet is the newest there is.
 const history = execFileSync(
   "git",
   ["log", "--diff-filter=A", "--name-only", "--format=", "--", ".changelog"],

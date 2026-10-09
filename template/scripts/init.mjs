@@ -4,9 +4,7 @@
 //   bun scripts/init.mjs --name <domain-dashed> [overrides…]
 //   bun scripts/init.mjs --check
 //
-// The only required flag is --name, given as the domain with dots→dashes (the
-// repo-naming convention: widget-io, acme-com). Everything else is derived
-// from it, and any derived value can be overridden with its own flag:
+// The only required flag is --name, given as the domain with dots→dashes (the repo-naming convention: widget-io, acme-com). Everything else is derived from it, and any derived value can be overridden with its own flag:
 //
 //   --name        acme-com        (required) repo / package / worker name
 //   --domain      acme.com        (derived: last "-" → ".")  prod custom domain
@@ -22,24 +20,11 @@
 //   bun scripts/init.mjs --name acme-com --scope acme  # shorter @acme/api
 //   bun scripts/init.mjs --name acme-app --domain acme.dev --scope acme
 //
-// Rewrites the template's placeholder tokens (below), copies the gitignored
-// `*.example` env files into place, and commits the rewritten files as
-// "Initialize from template: <name>". The commit is the point: an uncommitted
-// rewrite is one `git reset --hard` away from a half-renamed repo that only
-// fails at deploy time. On a repo with no commits yet the whole tree is the
-// first commit. It does NOT touch VERSION or TEMPLATE_CHANGELOG.md — those
-// record which template version you started from, so future template updates
-// can be applied (see README).
+// Rewrites the template's placeholder tokens (below), copies the gitignored `*.example` env files into place, and commits the rewritten files as "Initialize from template: <name>". The commit is the point: an uncommitted rewrite is one `git reset --hard` away from a half-renamed repo that only fails at deploy time. On a repo with no commits yet the whole tree is the first commit. It does NOT touch VERSION or TEMPLATE_CHANGELOG.md — those record which template version you started from, so future template updates can be applied (see README).
 //
-// After the commit the repository holds the two branches deploy.yml reads,
-// `main` (production) and `dev` (where work integrates), both at that commit,
-// with `dev` checked out. Push `dev` first and GitHub makes it the default
-// branch, so pull requests target it (docs/SETUP.md §4). A fresh repository's
-// only branch is renamed to `main`; branches that already exist are kept.
+// After the commit the repository holds the two branches deploy.yml reads, `main` (production) and `dev` (where work integrates), both at that commit, with `dev` checked out. Push `dev` first and GitHub makes it the default branch, so pull requests target it (docs/SETUP.md §4). A fresh repository's only branch is renamed to `main`; branches that already exist are kept.
 //
-// `--check` walks the tree for the same placeholders and exits 1 naming every
-// file that still has one. A project's CI runs it so a lost rewrite fails
-// there, not at deploy. It fails on the template itself by design.
+// `--check` walks the tree for the same placeholders and exits 1 naming every file that still has one. A project's CI runs it so a lost rewrite fails there, not at deploy. It fails on the template itself by design.
 //
 //   @stack/            → @<scope>/            (workspace package scope)
 //   dev.stack.example  → <dev-domain>         (dev custom domain)
@@ -49,8 +34,7 @@
 //   stack-dev/-prod    → <name>-dev/-prod     (worker names)
 //   STACK_BASE_URL     → <SCOPE>_BASE_URL      (screenshot tooling env)
 //
-// Display strings (the landing <h1>, the <title>, README headings) are left for
-// you to edit by taste — `grep -rn '\bstack\b'` to find them.
+// Display strings (the landing <h1>, the <title>, README headings) are left for you to edit by taste — `grep -rn '\bstack\b'` to find them.
 
 import { execFileSync } from "node:child_process";
 import {
@@ -90,12 +74,10 @@ const USAGE =
 
 const ROOT = join(__dirname, "..");
 const SKIP_DIRS = new Set([".git", "node_modules", "dist", ".wrangler", ".tanstack", ".auth"]);
-// The two scripts name the placeholders on purpose; the changelog is template
-// history and may quote them in prose.
+// The two scripts name the placeholders on purpose; the changelog is template history and may quote them in prose.
 const SKIP_FILES = new Set(["scripts/init.mjs", "scripts/init.test.mjs", "TEMPLATE_CHANGELOG.md"]);
 
-// Order matters: dev.stack.example before stack.example; the scope before the
-// bare name so "@stack/" isn't half-rewritten.
+// Order matters: dev.stack.example before stack.example; the scope before the bare name so "@stack/" isn't half-rewritten.
 const REPLACEMENTS = [
   ["@stack/", (c) => `@${c.scope}/`],
   ["dev.stack.example", (c) => c.devDomain],
@@ -170,9 +152,7 @@ if (!name) {
 }
 
 // Derive the rest from --name; each is overridable via its own flag.
-// Scope defaults to the full name for uniformity (@acme-com/api), so
-// --name is the single token that flows everywhere. Pass --scope for a shorter
-// brand form (e.g. --scope acme → @acme/api).
+// Scope defaults to the full name for uniformity (@acme-com/api), so --name is the single token that flows everywhere. Pass --scope for a shorter brand form (e.g. --scope acme → @acme/api).
 const domain = flags.domain ?? name.replace(/-(?=[^-]+$)/, "."); // last "-" → "."
 const scope = flags.scope ?? name;
 const devDomain = flags["dev-domain"] ?? `dev.${domain}`;
@@ -261,9 +241,7 @@ function commitRewrite() {
     unborn = true;
   }
   try {
-    // On a first commit the whole template is the commit; otherwise only the
-    // files this run rewrote, so unrelated local edits — staged or not — stay
-    // out of it.
+    // On a first commit the whole template is the commit; otherwise only the files this run rewrote, so unrelated local edits — staged or not — stay out of it.
     const paths = unborn ? ["."] : rewritten;
     git(["add", "-A", "--", ...paths]);
     git(["commit", "-q", "-m", COMMIT_MESSAGE, "--", ...paths]);
@@ -291,9 +269,7 @@ function branchExists(branch) {
   }
 }
 
-// Returns the line to print. `dev` is only checked out when it points at
-// HEAD: switching to a `dev` that is behind would show the old tree and make
-// the commit look lost.
+// Returns the line to print. `dev` is only checked out when it points at HEAD: switching to a `dev` that is behind would show the old tree and make the commit look lost.
 function setUpBranches() {
   const current = git(["branch", "--show-current"]); // "" when HEAD is detached
   if (!branchExists("main")) {
