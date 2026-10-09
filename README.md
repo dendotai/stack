@@ -1,7 +1,6 @@
 # stack
 
-Starter template for full-stack apps on TanStack Start + Convex + Better Auth
-on Cloudflare, and the home of its future site and tooling.
+Starter template for full-stack apps on TanStack Start + Convex + Better Auth on Cloudflare, and the home of its future site and tooling.
 
 ```
 .
@@ -12,15 +11,11 @@ on Cloudflare, and the home of its future site and tooling.
 └── .github/workflows/    # this repo's own workflows (run the template's checks)
 ```
 
-`template/` is a complete, runnable bun monorepo with its own lockfile and
-workflows. See [`template/README.md`](template/README.md) for what is in it and
-how to develop, deploy and update a project.
+`template/` is a complete, runnable bun monorepo with its own lockfile and workflows. See [`template/README.md`](template/README.md) for what is in it and how to develop, deploy and update a project.
 
 ## Start a project
 
-There is no "Use this template" button: it would copy this whole repo, not the
-starter. Until the bootstrap CLI exists, copy the directory out yourself, or ask
-an agent to:
+There is no "Use this template" button: it would copy this whole repo, not the starter. Until the bootstrap CLI exists, copy the directory out yourself, or ask an agent to:
 
 ```bash
 bunx giget gh:dendotai/stack/template my-app   # copies template/ into ./my-app
@@ -28,9 +23,7 @@ cd my-app && git init
 bun scripts/init.mjs --name my-app             # rename placeholders + commit; --dry-run to preview
 ```
 
-The script leaves `main` and `dev` at its commit, with `dev` checked out, so the
-first push makes `dev` the default branch. Then follow
-[`template/README.md` → Setup](template/README.md#setup).
+The script leaves `main` and `dev` at its commit, with `dev` checked out, so the first push makes `dev` the default branch. Then follow [`template/README.md` → Setup](template/README.md#setup).
 
 ## Develop the template
 
@@ -38,19 +31,11 @@ first push makes `dev` the default branch. Then follow
 bun run check        # lint + typecheck + test inside template/ (mirrors CI)
 ```
 
-The template is versioned: [`template/VERSION`](template/VERSION) and
-[`template/TEMPLATE_CHANGELOG.md`](template/TEMPLATE_CHANGELOG.md).
+The template is versioned: [`template/VERSION`](template/VERSION) and [`template/TEMPLATE_CHANGELOG.md`](template/TEMPLATE_CHANGELOG.md).
 
 ## Acceptance pass against a local backend
 
-The template is never deployed from this repo (see `CLAUDE.md`), so a change
-that needs a running Convex backend is accepted against a **local anonymous
-deployment**. That backend answers the client API on `127.0.0.1:3210` and the
-HTTP router — where Better Auth lives — on `127.0.0.1:3211`. A cloud deployment
-gives those two one host each (`<name>.convex.cloud` and `<name>.convex.site`),
-which is why the web app derives the second from the first and takes no second
-build variable. Against two ports that derivation is a no-op, so a router merges
-them back into one origin.
+The template is never deployed from this repo (see `CLAUDE.md`), so a change that needs a running Convex backend is accepted against a **local anonymous deployment**. That backend answers the client API on `127.0.0.1:3210` and the HTTP router — where Better Auth lives — on `127.0.0.1:3211`. A cloud deployment gives those two one host each (`<name>.convex.cloud` and `<name>.convex.site`), which is why the web app derives the second from the first and takes no second build variable. Against two ports that derivation is a no-op, so a router merges them back into one origin.
 
 Four steps, each from the repo root. Steps 1 to 3 each hold their terminal:
 
@@ -75,10 +60,7 @@ cd template && bun dev
 cd template/packages/api && bunx convex env set SITE_URL http://127.0.0.1:3000
 ```
 
-The app is then on `http://127.0.0.1:3000`, and the screenshot tooling signs in
-against it. `auth:login` reads `TEST_USER_EMAIL` and `TEST_USER_PASSWORD` from
-`template/apps/web/.dev.vars`; sign that account up once through the app's own
-`/login` form.
+The app is then on `http://127.0.0.1:3000`, and the screenshot tooling signs in against it. `auth:login` reads `TEST_USER_EMAIL` and `TEST_USER_PASSWORD` from `template/apps/web/.dev.vars`; sign that account up once through the app's own `/login` form.
 
 ```bash
 cd template/apps/web

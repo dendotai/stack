@@ -8,13 +8,7 @@ import { authClient } from "../../../lib/auth-client";
 type Mode = "signIn" | "signUp";
 
 export function LoginPage({ returnPath }: { returnPath: string }) {
-  // Server render and first client render must agree, so this starts false and
-  // flips in a mount effect. Until it flips, every submit control is disabled:
-  // before hydration the browser runs the form's own submission, and a password
-  // in a GET query string lands in history, the Referer header and access logs
-  // (#28). `method="post"` below is the backstop for whatever still slips
-  // through, e.g. implicit submission with Enter. Any social sign-in button
-  // added to this page takes the same flag.
+  // Server render and first client render must agree, so this starts false and flips in a mount effect. Until it flips, every submit control is disabled: before hydration the browser runs the form's own submission, and a password in a GET query string lands in history, the Referer header and access logs (#28). `method="post"` below is the backstop for whatever still slips through, e.g. implicit submission with Enter. Any social sign-in button added to this page takes the same flag.
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
 
@@ -22,9 +16,7 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // `undefined` while the query is in flight. The create-account control stays
-  // hidden then, so a closed deployment never flashes a sign-up a visitor
-  // cannot complete.
+  // `undefined` while the query is in flight. The create-account control stays hidden then, so a closed deployment never flashes a sign-up a visitor cannot complete.
   const { data: signUpDisabled } = useQuery(convexQuery(api.auth.signUpDisabled, {}));
   const canSignUp = signUpDisabled === false;
 
@@ -46,16 +38,11 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
       setSubmitting(false);
       return;
     }
-    // A full navigation, not a router navigate: the root route resolves the
-    // session on the server, so the new cookie has to ride a fresh document
-    // request for the destination to render signed-in.
+    // A full navigation, not a router navigate: the root route resolves the session on the server, so the new cookie has to ride a fresh document request for the destination to render signed-in.
     window.location.href = returnPath;
   }
 
-  // Better Auth answers with a 302 to Google, so nothing here navigates: the
-  // browser leaves on its own and comes back to `callbackURL`. A path, not a
-  // URL, so the deployment returns the visitor to the front that started the
-  // sign-in — dev serves two of them against one deployment (ADR 0004).
+  // Better Auth answers with a 302 to Google, so nothing here navigates: the browser leaves on its own and comes back to `callbackURL`. A path, not a URL, so the deployment returns the visitor to the front that started the sign-in — dev serves two of them against one deployment (ADR 0004).
   async function onGoogleSignIn() {
     setError(null);
     setSubmitting(true);

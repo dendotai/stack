@@ -26,14 +26,11 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     if (!sessionToken && !isPublicPath(location.pathname)) {
       throw redirect({
         to: "/login",
-        // `href`, not `pathname`: a deep link's query string is part of the
-        // page the visitor asked for.
+        // `href`, not `pathname`: a deep link's query string is part of the page the visitor asked for.
         search: { returnPathname: location.href },
       });
     }
-    // Lets route loaders prefetch auth-protected Convex queries during server
-    // render. The serverHttpClient only exists on the server; on client-side
-    // navigations this is a no-op.
+    // Lets route loaders prefetch auth-protected Convex queries during server render. The serverHttpClient only exists on the server; on client-side navigations this is a no-op.
     if (sessionToken) context.convexQueryClient.serverHttpClient?.setAuth(sessionToken);
     // Child routes read this instead of resolving the session a second time.
     return { sessionToken };
@@ -85,10 +82,7 @@ const NAV_LINKS: readonly NavLink[] = [
   { to: "/home", label: "Home", auth: "in" },
 ];
 
-// Signed-in state comes from the root route's context, not from the auth
-// client's session hook: the server already resolved it, so the nav renders
-// correctly in the first byte and an anonymous visitor makes no auth request.
-// Both sign-in and sign-out navigate the whole document, so it never goes stale.
+// Signed-in state comes from the root route's context, not from the auth client's session hook: the server already resolved it, so the nav renders correctly in the first byte and an anonymous visitor makes no auth request. Both sign-in and sign-out navigate the whole document, so it never goes stale.
 function TopNav() {
   const { sessionToken } = Route.useRouteContext();
   const signedIn = sessionToken !== null;
@@ -129,10 +123,7 @@ function TopNav() {
   );
 }
 
-// A button, not a link: signing out is an action, and a GET-navigable `/logout`
-// is something a browser or a link prefetch can fire on its own. Its role and
-// name are also the signed-in marker the screenshot scripts look for
-// (`scripts/selectors.mjs`).
+// A button, not a link: signing out is an action, and a GET-navigable `/logout` is something a browser or a link prefetch can fire on its own. Its role and name are also the signed-in marker the screenshot scripts look for (`scripts/selectors.mjs`).
 function SignOutButton() {
   const queryClient = useQueryClient();
   return (
@@ -141,8 +132,7 @@ function SignOutButton() {
       className="text-muted-foreground hover:text-foreground"
       onClick={async () => {
         await authClient.signOut();
-        // The cache holds the signed-out user's rows; a persister would keep
-        // them on disk for the next visitor on this device.
+        // The cache holds the signed-out user's rows; a persister would keep them on disk for the next visitor on this device.
         queryClient.clear();
         // Full navigation so the root route re-resolves the session server-side.
         window.location.href = "/";

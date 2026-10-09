@@ -9,11 +9,9 @@ concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
 
-# One job per check, so each PR check line names what failed
-# (`test / lint`, `test / typecheck`, …) and the checks run in parallel.
+# One job per check, so each PR check line names what failed (`test / lint`, `test / typecheck`, …) and the checks run in parallel.
 jobs:
-  # A lost or partly reverted init rewrite leaves template placeholders
-  # behind and only surfaces as a wrong-zone deploy error. Fail here instead.
+  # A lost or partly reverted init rewrite leaves template placeholders behind and only surfaces as a wrong-zone deploy error. Fail here instead.
   placeholders:
     runs-on: ubuntu-latest
     permissions:

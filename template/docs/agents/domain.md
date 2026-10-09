@@ -11,9 +11,7 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 
 ## File structure
 
-Single-context repo. The monorepo layout (`apps/*`, `packages/*`) shares one
-domain vocabulary and one root `docs/adr/` — per-package ADR directories are
-deliberately not used, and there is no `CONTEXT-MAP.md`.
+Single-context repo. The monorepo layout (`apps/*`, `packages/*`) shares one domain vocabulary and one root `docs/adr/` — per-package ADR directories are deliberately not used, and there is no `CONTEXT-MAP.md`.
 
 ```
 /

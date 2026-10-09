@@ -12,14 +12,11 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
-Edit the right-hand column to match whatever vocabulary you actually use. The
-labels must exist in the repo before a skill applies them
-(`gh label create <name>` for any missing one).
+Edit the right-hand column to match whatever vocabulary you actually use. The labels must exist in the repo before a skill applies them (`gh label create <name>` for any missing one).
 
 ## Additional state labels
 
-`.github/workflows/maintenance.yml` also knows these labels. They sit next to
-the five roles and describe who is on an issue, not whether it is specified.
+`.github/workflows/maintenance.yml` also knows these labels. They sit next to the five roles and describe who is on an issue, not whether it is specified.
 
 | Label         | Meaning                                                                                              |
 | ------------- | ---------------------------------------------------------------------------------------------------- |
@@ -28,15 +25,8 @@ the five roles and describe who is on an issue, not whether it is specified.
 | `needs-human` | An agent parked: a numbered list of questions waits in the issue comments. Exclusive with `ready-for-agent`. |
 | `tracking`    | Spec split into child tickets. Not grabbable — the work is the children. Closes when they all close. |
 
-`/to-tickets` applies `tracking` to the parent spec after publishing the
-children and removes `in-progress` from it. `/next` and `/triage` never serve a
-`tracking` issue as actionable work.
+`/to-tickets` applies `tracking` to the parent spec after publishing the children and removes `in-progress` from it. `/next` and `/triage` never serve a `tracking` issue as actionable work.
 
 ## Exit convention: labels are stripped on close
 
-Closing an issue is the terminal state. The maintenance workflow removes every
-live state label (`needs-triage`, `needs-info`, `ready-for-agent`,
-`ready-for-human`, `tracking`, `in-progress`, `needs-human`, `in-review`) from
-each closed issue; `wontfix` stays as the closing reason. It runs on every
-issue close and on manual dispatch, so a missed event self-heals on the next
-run. Agents never strip these labels themselves.
+Closing an issue is the terminal state. The maintenance workflow removes every live state label (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `tracking`, `in-progress`, `needs-human`, `in-review`) from each closed issue; `wontfix` stays as the closing reason. It runs on every issue close and on manual dispatch, so a missed event self-heals on the next run. Agents never strip these labels themselves.

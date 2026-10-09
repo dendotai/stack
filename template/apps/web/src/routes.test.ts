@@ -5,15 +5,12 @@ import ts from "typescript";
 import { describe, expect, test } from "vitest";
 
 /**
- * A top-level export that survives to runtime, with its 1-based line. `name` is
- * the exported binding, or a description of the form for `export * from`, whose
- * names are not knowable from this file alone.
+ * A top-level export that survives to runtime, with its 1-based line. `name` is the exported binding, or a description of the form for `export * from`, whose names are not knowable from this file alone.
  */
 type ValueExport = { name: string; line: number };
 
 /**
- * A regex cannot do this: it misses the `export { X }` and `export * from`
- * forms, and it cannot tell an erased type export from a value one.
+ * A regex cannot do this: it misses the `export { X }` and `export * from` forms, and it cannot tell an erased type export from a value one.
  */
 function valueExports(source: string, fileName: string): ValueExport[] {
   const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
@@ -74,8 +71,7 @@ function boundNames(name: ts.BindingName): string[] {
 
 const APP_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-// The generator's own config, so the scan cannot drift from the route tree it
-// builds. The `-` prefix exclusion is not in here — the generator hardcodes it.
+// The generator's own config, so the scan cannot drift from the route tree it builds. The `-` prefix exclusion is not in here — the generator hardcodes it.
 const { routesDirectory, routeFileIgnorePattern } = JSON.parse(
   readFileSync(join(APP_DIR, "tsr.config.json"), "utf8"),
 ) as { routesDirectory: string; routeFileIgnorePattern: string };
@@ -84,9 +80,7 @@ const ROUTES_DIR = join(APP_DIR, routesDirectory);
 const IGNORED = new RegExp(routeFileIgnorePattern);
 
 /**
- * Route files per ADR 0005: everything under the routes directory except the
- * `-` prefixed private files and directories (ADR 0002) and the files the
- * generator itself ignores.
+ * Route files per ADR 0005: everything under the routes directory except the `-` prefixed private files and directories (ADR 0002) and the files the generator itself ignores.
  */
 function routeFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

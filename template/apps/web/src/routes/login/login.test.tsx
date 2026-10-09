@@ -3,9 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-// The login page reads the sign-up flag through @convex-dev/react-query +
-// TanStack Query, and signs in through the Better Auth client. Mock all three
-// so the page renders without a live Convex client or deployment.
+// The login page reads the sign-up flag through @convex-dev/react-query + TanStack Query, and signs in through the Better Auth client. Mock all three so the page renders without a live Convex client or deployment.
 const state = vi.hoisted(() => ({
   signUpDisabled: undefined as undefined | boolean,
   signIn: vi.fn(),
@@ -37,9 +35,7 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-// #28: between first paint and hydration a submit runs the browser's own
-// submission. These two properties of the *server-rendered* markup are what
-// keep a password out of the URL in that window.
+// #28: between first paint and hydration a submit runs the browser's own submission. These two properties of the *server-rendered* markup are what keep a password out of the URL in that window.
 test("server-renders a POST form whose submit is disabled", () => {
   const dom = new DOMParser().parseFromString(
     renderToString(<LoginPage returnPath="/home" />),
