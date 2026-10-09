@@ -9,7 +9,7 @@ on Cloudflare, and the home of its future site and tooling.
 ├── apps/                 # (future) marketing site — this repo's own, not the starter's
 ├── packages/             # (future) bootstrap CLI — same; the starter's apps/ and packages/ are under template/
 ├── scripts/              # this repo's own tooling (see Acceptance pass below)
-└── .github/workflows/    # this repo's own CI (runs the template's checks)
+└── .github/workflows/    # this repo's own workflows (run the template's checks)
 ```
 
 `template/` is a complete, runnable bun monorepo with its own lockfile and

@@ -1,0 +1,73 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+# One job per check, so each PR check line names what failed
+# (`test / lint`, `test / typecheck`, …) and the checks run in parallel.
+jobs:
+  # A lost or partly reverted init rewrite leaves template placeholders
+  # behind and only surfaces as a wrong-zone deploy error. Fail here instead.
+  placeholders:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.8
+
+      - run: bun scripts/init.mjs --check
+
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.8
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.8
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run typecheck
+
+  unit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.8
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run test
