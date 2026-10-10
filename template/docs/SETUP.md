@@ -1,124 +1,57 @@
 # Setup
 
-One-time provisioning to take a project created from this template to **deployed**
-on two environments (`dev` and `prod`). Do the sections in order; the last one
-(GitHub environments) wires everything together so CI/CD can deploy.
+One-time provisioning to take a project created from this template to **deployed** on two environments (`dev` and `prod`). Do the sections in order; the last one (GitHub environments) wires everything together so CI/CD can deploy.
 
-Each environment is a full, isolated stack: its own Cloudflare Worker + custom
-domain, its own Convex deployment. `dev` deploys from the `dev` branch, `prod`
-from `main`.
+Each environment is a full, isolated stack: its own Cloudflare Worker + custom domain, its own Convex deployment. `dev` deploys from the `dev` branch, `prod` from `main`.
 
 ## Prerequisites
 
 - **bun** ≥ 1.3.8 (`packageManager` in root `package.json`).
-- **A monorepo process runner** for the root `dev` script, which uses `muxa`
-  (`muxa -s @stack/web dev web -s @stack/api dev convex`) to run web + Convex
-  with labeled output. If you don't have `muxa`, replace the `dev` script with
-  any parallel runner — or just run the two in separate terminals:
-  `bun --filter @stack/web dev` and `cd packages/api && bunx convex dev`.
-- **A local HTTPS dev host (optional):** the web app declares
-  `https://<project>.internal` in `apps/web/package.json#devSite`, and the
-  [`@den-ai/devsite`](https://www.npmjs.com/package/@den-ai/devsite) Vite
-  plugin (a dev dependency) serves it through a local Caddy, with no fixed
-  port. One-time per machine: `brew install caddy`, make `*.internal` resolve
-  to the machine, then `bun run devsite` from the repo root (`devsite init`,
-  asks for `sudo`). The package README has the steps, including phone access
-  over Tailscale. Without it, `bun run dev` prints a plain `http://localhost`
-  URL that still works — the rows marked **dev only** in
-  [§2](#2-convex-two-deployments) and the hop in [§3](#3-google-sign-in)
-  exist for this host and can be skipped.
-- **A secret manager with a CLI** for piping secrets into GitHub and Convex
-  without printing them. `scripts/secrets-scaffold.mjs` creates the items for
-  the 1Password CLI `op`; any other manager builds them by hand from its
-  `--print` output (see [Secrets & environments](#secrets--environments)).
+- **A monorepo process runner** for the root `dev` script, which uses `muxa` (`muxa -s @stack/web dev web -s @stack/api dev convex`) to run web + Convex with labeled output. If you don't have `muxa`, replace the `dev` script with any parallel runner — or just run the two in separate terminals: `bun --filter @stack/web dev` and `cd packages/api && bunx convex dev`.
+- **A local HTTPS dev host (optional):** the web app declares `https://<project>.internal` in `apps/web/package.json#devSite`, and the [`@den-ai/devsite`](https://www.npmjs.com/package/@den-ai/devsite) Vite plugin (a dev dependency) serves it through a local Caddy, with no fixed port. One-time per machine: `brew install caddy`, make `*.internal` resolve to the machine, then `bun run devsite` from the repo root (`devsite init`, asks for `sudo`). The package README has the steps, including phone access over Tailscale. Without it, `bun run dev` prints a plain `http://localhost` URL that still works — the rows marked **dev only** in [§2](#2-convex-two-deployments) and the hop in [§3](#3-google-sign-in) exist for this host and can be skipped.
+- **A secret manager with a CLI** for piping secrets into GitHub and Convex without printing them. `scripts/secrets-scaffold.mjs` creates the items for the 1Password CLI `op`; any other manager builds them by hand from its `--print` output (see [Secrets & environments](#secrets--environments)).
 - Accounts: Cloudflare, Convex, GitHub.
 
 ---
 
 ## Secrets & environments
 
-Every value the sections below produce goes into the secret manager first and
-is piped from there — never pasted through the terminal or an agent. The
-layout: the project's own vault, **one item per environment** — `<project> dev`
-and `<project> prod` — a section per service, and field labels with no
-environment qualifier (the item name carries it). The shape is the checked-in
-[`scripts/secrets.manifest.json`](../scripts/secrets.manifest.json); it is the
-source of truth for every `op://…` path in this file.
+Every value the sections below produce goes into the secret manager first and is piped from there — never pasted through the terminal or an agent. The layout: the project's own vault, **one item per environment** — `<project> dev` and `<project> prod` — a section per service, and field labels with no environment qualifier (the item name carries it). The shape is the checked-in [`scripts/secrets.manifest.json`](../scripts/secrets.manifest.json); it is the source of truth for every `op://…` path in this file.
 
-Create both items from it **before §1**, so each value has a home when you get
-it:
+Create both items from it **before §1**, so each value has a home when you get it:
 
 ```bash
 bun scripts/secrets-scaffold.mjs           # 1Password CLI `op`, signed in
 bun scripts/secrets-scaffold.mjs --print   # any other secret manager: build by hand
 ```
 
-The script creates the vault when it is missing (named after the project;
-`--vault` overrides), then one item per environment with every field empty for
-you to fill in the manager's UI — except `convex / auth-secret`, generated on
-the spot and never printed, and `app / site-url`, prefilled from the custom
-domain in `apps/web/wrangler.jsonc`. It stops without writing when an item
-already exists; `--dry-run` shows the plan.
+The script creates the vault when it is missing (named after the project; `--vault` overrides), then one item per environment with every field empty for you to fill in the manager's UI — except `convex / auth-secret`, generated on the spot and never printed, and `app / site-url`, prefilled from the custom domain in `apps/web/wrangler.jsonc`. It stops without writing when an item already exists; `--dry-run` shows the plan.
 
 **Rules**
 
-- **One section per provider (`convex`, `cloudflare`, `google`), field labels
-  inside it.** Written here as `<section> / <label>`, which is also how the
-  CLI addresses a field: `op://<vault>/<item>/<section>/<label>`.
-- **No spaces in field labels.** `.` separates namespace elements, `-` separates
-  words within an element: `deploy-key`, `api-token`, `web.client-id`,
-  `fcm.service-account`. Spaceless labels stay clean in secret references
-  (`op://` paths) and greppable in docs and scripts, and the two separators
-  carry distinct meaning: element boundary versus word boundary.
-- **Prefix the label with its consumer where a provider section can hold more
-  than one credential** — `google / web.client-id`, later `google / ios.client-id`
-  or `google / fcm.service-account`. Name the consumer after the `apps/`
-  directory it authenticates (`web` for `apps/web`), or after the service
-  that holds the credential when no app does (`fcm`). A provider with one
-  credential per item (`convex / deploy-key`) takes no prefix.
-- **Every label states the credential's role**, so its permissions are
-  predictable without opening the issuing dashboard: `deploy-key`, `api-token`,
-  `auth-secret` — never a bare `key`, `token` or `secret`.
-- **Field labels carry no env qualifier** — inside `<project> dev`,
-  `convex / deploy-key` unambiguously means the dev key.
-- **Account-level values** (`cloudflare / account-id`, `cloudflare / api-token`)
-  are duplicated into both env items. They rarely change, and one path form
-  then covers every value.
-- **`convex / auth-secret` (the deployment's `BETTER_AUTH_SECRET`) is split
-  per-env on purpose** so a dev leak can't forge prod sessions.
-- **The `google` section in each env item holds `web.client-id` and
-  `web.client-secret`** — that environment's own OAuth client
-  ([§3](#3-google-sign-in)). Two clients, two pairs of values, one pair per
-  item; nothing is shared between them.
+- **One section per provider (`convex`, `cloudflare`, `google`), field labels inside it.** Written here as `<section> / <label>`, which is also how the CLI addresses a field: `op://<vault>/<item>/<section>/<label>`.
+- **No spaces in field labels.** `.` separates namespace elements, `-` separates words within an element: `deploy-key`, `api-token`, `web.client-id`, `fcm.service-account`. Spaceless labels stay clean in secret references (`op://` paths) and greppable in docs and scripts, and the two separators carry distinct meaning: element boundary versus word boundary.
+- **Prefix the label with its consumer where a provider section can hold more than one credential** — `google / web.client-id`, later `google / ios.client-id` or `google / fcm.service-account`. Name the consumer after the `apps/` directory it authenticates (`web` for `apps/web`), or after the service that holds the credential when no app does (`fcm`). A provider with one credential per item (`convex / deploy-key`) takes no prefix.
+- **Every label states the credential's role**, so its permissions are predictable without opening the issuing dashboard: `deploy-key`, `api-token`, `auth-secret` — never a bare `key`, `token` or `secret`.
+- **Field labels carry no env qualifier** — inside `<project> dev`, `convex / deploy-key` unambiguously means the dev key.
+- **Account-level values** (`cloudflare / account-id`, `cloudflare / api-token`) are duplicated into both env items. They rarely change, and one path form then covers every value.
+- **`convex / auth-secret` (the deployment's `BETTER_AUTH_SECRET`) is split per-env on purpose** so a dev leak can't forge prod sessions.
+- **The `google` section in each env item holds `web.client-id` and `web.client-secret`** — that environment's own OAuth client ([§3](#3-google-sign-in)). Two clients, two pairs of values, one pair per item; nothing is shared between them.
 
 ### Names in the issuing dashboards
 
-A credential also has a name where it is created, and in the platform's list
-that name is all that tells it apart. **Prefix it with the project name wherever
-the platform's namespace is account-global; keep the platform default where the
-namespace is already the project's own.** One account hosts many projects, and
-a token list of rows all named after the creation template can only be matched
-to a project by id. Name the credential in the creation dialog: renaming later
-is possible, and nobody does it. `gha` names the consumer, GitHub Actions.
+A credential also has a name where it is created, and in the platform's list that name is all that tells it apart. **Prefix it with the project name wherever the platform's namespace is account-global; keep the platform default where the namespace is already the project's own.** One account hosts many projects, and a token list of rows all named after the creation template can only be matched to a project by id. Name the credential in the creation dialog: renaming later is possible, and nobody does it. `gha` names the consumer, GitHub Actions.
 
 | Credential | Namespace | Name |
 |---|---|---|
 | Cloudflare API token ([§1](#1-cloudflare-account--domain)) | account-global | `<project> gha deploy` — no env part: one token serves both environments |
 | Convex deploy key ([§2](#2-convex-two-deployments)) | the deployment's own | `gha-dev` / `gha-prod` |
 
-The Google OAuth clients take no prefix: they live in the product's own Google
-Cloud project ([§3](#3-google-sign-in)). The manifest carries the two names
-above as `issuedAs`, and the scaffold script prints them next to the item field
-and the GitHub secret, with `--print` and after creating the items, so the three
-read as one scheme.
+The Google OAuth clients take no prefix: they live in the product's own Google Cloud project ([§3](#3-google-sign-in)). The manifest carries the two names above as `issuedAs`, and the scaffold script prints them next to the item field and the GitHub secret, with `--print` and after creating the items, so the three read as one scheme.
 
-**Why split per env:** the environment is the dominant axis (most fields differ
-dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub
-`prod` environment ← `<project> prod` — so values copy straight across with no
-chance of grabbing a dev value for prod, and prod keeps its blast-radius isolation.
+**Why split per env:** the environment is the dominant axis (most fields differ dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub `prod` environment ← `<project> prod` — so values copy straight across with no chance of grabbing a dev value for prod, and prod keeps its blast-radius isolation.
 
-**Never paste secret values through the terminal/agent.** Pipe from the
-manager; with `op`, the vault is the project name unless you passed `--vault`:
+**Never paste secret values through the terminal/agent.** Pipe from the manager; with `op`, the vault is the project name unless you passed `--vault`:
 
 ```bash
 op read "op://<vault>/<project> dev/convex/deploy-key" | gh secret set CONVEX_DEPLOY_KEY --env dev
@@ -130,8 +63,7 @@ op read "op://<vault>/<project> dev/google/web.client-secret" | xargs bunx conve
 gh variable set CONVEX_URL --env prod --body "$(op read "op://<vault>/<project> prod/convex/url")"
 ```
 
-CI deploy keys carry only the scopes the workflow uses — for Convex,
-`deployment:deploy` + `deployment:data:view` ([§2](#deploy-key-scopes)).
+CI deploy keys carry only the scopes the workflow uses — for Convex, `deployment:deploy` + `deployment:data:view` ([§2](#deploy-key-scopes)).
 
 ---
 
@@ -141,29 +73,19 @@ CI deploy keys carry only the scopes the workflow uses — for Convex,
 - Add your domain as a **zone** (Add a Site → enter the apex → Free plan).
 - Update nameservers at your registrar to Cloudflare's (the dashboard shows them).
 - Wait for **Active** status (usually <1h).
-- Note your **Account ID** (dashboard right sidebar) → `cloudflare / account-id`
-  in both items → GitHub variable `CLOUDFLARE_ACCOUNT_ID`.
-- Create an **API token**, named **`<project> gha deploy`** in the creation
-  dialog — it keeps the template's name otherwise, and tokens are
-  account-global ([naming](#names-in-the-issuing-dashboards)) — with:
+- Note your **Account ID** (dashboard right sidebar) → `cloudflare / account-id` in both items → GitHub variable `CLOUDFLARE_ACCOUNT_ID`.
+- Create an **API token**, named **`<project> gha deploy`** in the creation dialog — it keeps the template's name otherwise, and tokens are account-global ([naming](#names-in-the-issuing-dashboards)) — with:
   - Account → Workers Scripts: **Edit**
   - Account → Account Settings: **Read**
   - Zone → Workers Routes: **Edit** (your zone)
   - Zone → DNS: **Edit** (your zone)
-  - Zone → Single Redirect: **Edit** (your zone) — for the local-callback hop in
-    [§3](#local-google-callbacks-the-cloudflare-redirect-hop). The dashboard picker calls it
-    "Single Redirect"; the docs call the product "Dynamic URL Redirect".
+  - Zone → Single Redirect: **Edit** (your zone) — for the local-callback hop in [§3](#local-google-callbacks-the-cloudflare-redirect-hop). The dashboard picker calls it "Single Redirect"; the docs call the product "Dynamic URL Redirect".
   - (Template "Edit Cloudflare Workers" + add the DNS and Single Redirect scopes.)
-  - Save the value → `cloudflare / api-token` in both items → GitHub secret
-    `CLOUDFLARE_API_TOKEN` (the same token works for both environments).
+  - Save the value → `cloudflare / api-token` in both items → GitHub secret `CLOUDFLARE_API_TOKEN` (the same token works for both environments).
 
 ### Custom domains bind automatically
 
-`wrangler deploy` **auto-binds** the custom domain declared under
-`env.{dev,prod}.routes` in `apps/web/wrangler.jsonc` on every deploy (idempotent
-once it exists). The domain only has to be **bindable** — Cloudflare must manage
-its DNS. Subdomains (`dev.<domain>`) are usually clean; see
-[gotcha #1](#prod-cutover-gotchas) for the apex.
+`wrangler deploy` **auto-binds** the custom domain declared under `env.{dev,prod}.routes` in `apps/web/wrangler.jsonc` on every deploy (idempotent once it exists). The domain only has to be **bindable** — Cloudflare must manage its DNS. Subdomains (`dev.<domain>`) are usually clean; see [gotcha #1](#prod-cutover-gotchas) for the apex.
 
 ---
 
@@ -172,50 +94,24 @@ its DNS. Subdomains (`dev.<domain>`) are usually clean; see
 - Sign up: <https://convex.dev/>
 - Create a project. You get a **dev deployment** automatically.
 - Create a **production deployment** (project Settings → Production deployment).
-- Generate **deploy keys** for both (Settings → Deploy keys → New). A key
-  lives in its deployment, so its name says only who uses it
-  ([naming](#names-in-the-issuing-dashboards)):
-  - dev key `gha-dev` → `convex / deploy-key` in `<project> dev` → GitHub
-    `dev` env secret `CONVEX_DEPLOY_KEY`.
-  - prod key `gha-prod` → `convex / deploy-key` in `<project> prod` → GitHub
-    `prod` env secret `CONVEX_DEPLOY_KEY`.
-  - Scope each key to what CI runs, nothing more — the set is in
-    [Deploy-key scopes](#deploy-key-scopes) below.
-- Note each deployment's name and **HTTPS URL** → `convex / deployment` and
-  `convex / url` in that env's item → GitHub variable `CONVEX_URL` (per env).
-- Locally: `cd packages/api && bunx convex dev` does an interactive browser login
-  and links your dev deployment (no key stored locally).
+- Generate **deploy keys** for both (Settings → Deploy keys → New). A key lives in its deployment, so its name says only who uses it ([naming](#names-in-the-issuing-dashboards)):
+  - dev key `gha-dev` → `convex / deploy-key` in `<project> dev` → GitHub `dev` env secret `CONVEX_DEPLOY_KEY`.
+  - prod key `gha-prod` → `convex / deploy-key` in `<project> prod` → GitHub `prod` env secret `CONVEX_DEPLOY_KEY`.
+  - Scope each key to what CI runs, nothing more — the set is in [Deploy-key scopes](#deploy-key-scopes) below.
+- Note each deployment's name and **HTTPS URL** → `convex / deployment` and `convex / url` in that env's item → GitHub variable `CONVEX_URL` (per env).
+- Locally: `cd packages/api && bunx convex dev` does an interactive browser login and links your dev deployment (no key stored locally).
 
 ### Deploy-key scopes
 
-`convex deploy` needs `deployment:deploy` **and `deployment:data:view`**:
-`convex.config.ts` installs the Better Auth component, and the component
-install/diff path reads deployment data. A key with `deployment:deploy` alone
-pushes plain schema + functions and fails on the first release that installs a
-component — for this template, the first push.
+`convex deploy` needs `deployment:deploy` **and `deployment:data:view`**: `convex.config.ts` installs the Better Auth component, and the component install/diff path reads deployment data. A key with `deployment:deploy` alone pushes plain schema + functions and fails on the first release that installs a component — for this template, the first push.
 
-Add `deployment:functions:runInternalMutations` only when you chain a
-migrations step after the deploy (`convex run migrations:runAll`, see the
-[migration helper reference](../packages/api/.claude/skills/convex-migration-helper/references/migrations-component.md#run-migrations-on-deploy)):
-the runner is an internal mutation. The migration's own writes happen
-server-side under the function's authority, so `deployment:data:write` stays
-off the key. One gotcha for that step: `migrations.runner([])` throws
-`Specify the migration` at runtime, so the release that retires the last
-migration fails the `runAll` step — after the schema push already succeeded,
-which leaves the worker deploy blocked. While the registry is empty, export
-`runAll` as a no-op `internalMutation`, and swap `migrations.runner([...])`
-back in with the next real migration.
+Add `deployment:functions:runInternalMutations` only when you chain a migrations step after the deploy (`convex run migrations:runAll`, see the [migration helper reference](../packages/api/.claude/skills/convex-migration-helper/references/migrations-component.md#run-migrations-on-deploy)): the runner is an internal mutation. The migration's own writes happen server-side under the function's authority, so `deployment:data:write` stays off the key. One gotcha for that step: `migrations.runner([])` throws `Specify the migration` at runtime, so the release that retires the last migration fails the `runAll` step — after the schema push already succeeded, which leaves the worker deploy blocked. While the registry is empty, export `runAll` as a no-op `internalMutation`, and swap `migrations.runner([...])` back in with the next real migration.
 
-Each missing scope fails the push fast and names the scope in the error, so a
-too-narrow key is easy to widen — the set above skips those rounds.
+Each missing scope fails the push fast and names the scope in the error, so a too-narrow key is easy to widen — the set above skips those rounds.
 
 ### Deployment env vars
 
-Better Auth runs inside the Convex deployment ([ADR 0004](adr/0004-identity-plane-better-auth-in-convex.md)),
-so its config is **per Convex deployment**, not a Worker secret. Set these on
-**each** deployment before the first push — a push missing any of the four
-required ones fails outright, by design: `BETTER_AUTH_SECRET`, `SITE_URL`,
-`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+Better Auth runs inside the Convex deployment ([ADR 0004](adr/0004-identity-plane-better-auth-in-convex.md)), so its config is **per Convex deployment**, not a Worker secret. Set these on **each** deployment before the first push — a push missing any of the four required ones fails outright, by design: `BETTER_AUTH_SECRET`, `SITE_URL`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
 
 | Variable | Value | Why |
 |---|---|---|
@@ -227,11 +123,7 @@ required ones fails outright, by design: `BETTER_AUTH_SECRET`, `SITE_URL`,
 | `AUTH_TRUSTED_ORIGINS` | **dev only:** the local devsite origin, e.g. `https://<project>.internal`. Comma-separated for more than one. Prod lists none. | a front other than `SITE_URL` fails the CSRF origin check unless it is listed here |
 | `GOOGLE_REDIRECT_URI` | **dev only:** `https://internal.<domain>/api/auth/callback/google` ([§3](#local-google-callbacks-the-cloudflare-redirect-hop)) | the redirect **every** trusted front other than `SITE_URL` sends to Google; Google refuses a `.internal` URI, so the local front borrows the public hop host |
 
-**`GOOGLE_REDIRECT_URI` is one value for all of them.** A deployment that
-trusts a second *public* front should register that front's own callback on its
-Google client and leave `GOOGLE_REDIRECT_URI` unset — set, it would send that
-front's sign-in through the hop and land the visitor on the devsite instead.
-Set it only while exactly one trusted front cannot name itself.
+**`GOOGLE_REDIRECT_URI` is one value for all of them.** A deployment that trusts a second *public* front should register that front's own callback on its Google client and leave `GOOGLE_REDIRECT_URI` unset — set, it would send that front's sign-in through the hop and land the visitor on the devsite instead. Set it only while exactly one trusted front cannot name itself.
 
 ```bash
 cd packages/api
@@ -245,77 +137,47 @@ bunx convex env set GOOGLE_REDIRECT_URI https://internal.<domain>/api/auth/callb
 # Secrets are piped from the manager, never typed — see Secrets & environments.
 ```
 
-**Both dev fronts run against the one dev deployment.** `SITE_URL` is the
-deployed dev host; the local devsite host reaches the same deployment through
-`AUTH_TRUSTED_ORIGINS`. Each sign-in returns to the front that started it: the
-deployment picks the Google redirect per request from the forwarded front host,
-and Better Auth's post-callback redirect is a path, which the browser resolves
-against whichever front it is on.
+**Both dev fronts run against the one dev deployment.** `SITE_URL` is the deployed dev host; the local devsite host reaches the same deployment through `AUTH_TRUSTED_ORIGINS`. Each sign-in returns to the front that started it: the deployment picks the Google redirect per request from the forwarded front host, and Better Auth's post-callback redirect is a path, which the browser resolves against whichever front it is on.
 
 ---
 
 ## 3. Google sign-in
 
-Google's consent screen names the OAuth client's project, so the project is the
-product's own — not a shared one, and not the hosting vendor's.
+Google's consent screen names the OAuth client's project, so the project is the product's own — not a shared one, and not the hosting vendor's.
 
 **One Google Cloud project per product**, on the product owner's Google account:
 <https://console.cloud.google.com/> → new project, named after the product.
 
 **Consent screen** (APIs & Services → OAuth consent screen):
 
-- User type **External**, and **Publish** it. In testing mode only listed test
-  users can sign in, and their sessions expire in days.
-- **Default scopes only** (`email`, `profile`, `openid`). Anything else is a
-  sensitive or restricted scope and triggers Google's verification review.
+- User type **External**, and **Publish** it. In testing mode only listed test users can sign in, and their sessions expire in days.
+- **Default scopes only** (`email`, `profile`, `openid`). Anything else is a sensitive or restricted scope and triggers Google's verification review.
 - **No logo.** Uploading one also triggers the review, for no functional gain.
 
-**One OAuth client per environment** (APIs & Services → Credentials → Create
-credentials → OAuth client ID → Web application). Two clients, so a leaked dev
-credential cannot reach prod sign-in.
+**One OAuth client per environment** (APIs & Services → Credentials → Create credentials → OAuth client ID → Web application). Two clients, so a leaked dev credential cannot reach prod sign-in.
 
 | Client | Authorized redirect URIs |
 |---|---|
 | `<product> dev` | `https://dev.<domain>/api/auth/callback/google` and `https://internal.<domain>/api/auth/callback/google` (the hop, below) |
 | `<product> prod` | `https://<domain>/api/auth/callback/google` |
 
-Each client's id and secret go to **that environment's Convex deployment** as
-`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` ([§2](#deployment-env-vars)), and to
-that environment's secret-manager item under a `google` section as
-`web.client-id` (text) and `web.client-secret` (password). The `web.` prefix
-names the consumer, so a later client for another app sits beside it in the
-same section ([Secrets & environments](#secrets--environments)).
+Each client's id and secret go to **that environment's Convex deployment** as `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` ([§2](#deployment-env-vars)), and to that environment's secret-manager item under a `google` section as `web.client-id` (text) and `web.client-secret` (password). The `web.` prefix names the consumer, so a later client for another app sits beside it in the same section ([Secrets & environments](#secrets--environments)).
 
-Registering several redirect URIs on one client is harmless. Which one is live
-is deployment config, not Google config.
+Registering several redirect URIs on one client is harmless. Which one is live is deployment config, not Google config.
 
 ### Local Google callbacks: the Cloudflare redirect hop
 
-Google refuses a redirect URI on a non-public TLD, so the local devsite host
-(`https://<project>.internal`) cannot be registered. It does not have to be:
-Google never *contacts* the redirect URI, it only hands the browser a 302. So
-register a public hostname and have Cloudflare bounce the browser inward.
+Google refuses a redirect URI on a non-public TLD, so the local devsite host (`https://<project>.internal`) cannot be registered. It does not have to be: Google never *contacts* the redirect URI, it only hands the browser a 302. So register a public hostname and have Cloudflare bounce the browser inward.
 
-1. **DNS** (your zone → DNS → Records): a **proxied** dummy record
-   `internal.<domain>`, type `AAAA`, value `100::`. Universal SSL covers
-   first-level subdomains, so it gets a certificate with no extra work. Put its
-   purpose in the record's **Comment** field: "OAuth redirect hop to the local
-   devsite (SETUP.md §3)".
+1. **DNS** (your zone → DNS → Records): a **proxied** dummy record `internal.<domain>`, type `AAAA`, value `100::`. Universal SSL covers first-level subdomains, so it gets a certificate with no extra work. Put its purpose in the record's **Comment** field: "OAuth redirect hop to the local devsite (SETUP.md §3)".
 2. **Redirect rule** (your zone → Rules → Redirect Rules → Single Redirect):
    - When `http.host eq "internal.<domain>"`
-   - Then a **dynamic** 302 to
-     `concat("https://<project>.internal", http.request.uri.path)`
+   - Then a **dynamic** 302 to `concat("https://<project>.internal", http.request.uri.path)`
    - **Preserve query string: on** — the authorization code arrives in it.
-   - Name the rule for what it does: "OAuth redirect hop → local devsite".
-   The rule matches any path, so the hostname also serves anything else that
-   ever needs a public URL landing on local dev.
-3. **Token scope**: managing the rule from the API needs
-   Zone → Single Redirect: **Edit** ([§1](#1-cloudflare-account--domain)).
+   - Name the rule for what it does: "OAuth redirect hop → local devsite". The rule matches any path, so the hostname also serves anything else that ever needs a public URL landing on local dev.
+3. **Token scope**: managing the rule from the API needs Zone → Single Redirect: **Edit** ([§1](#1-cloudflare-account--domain)).
 
-The dev deployment then sends `https://internal.<domain>/api/auth/callback/google`
-to Google as the redirect for the local front (`GOOGLE_REDIRECT_URI`), and
-Cloudflare returns the browser to `https://<project>.internal/api/auth/callback/google`
-with the code intact.
+The dev deployment then sends `https://internal.<domain>/api/auth/callback/google` to Google as the redirect for the local front (`GOOGLE_REDIRECT_URI`), and Cloudflare returns the browser to `https://<project>.internal/api/auth/callback/google` with the code intact.
 
 ---
 
@@ -323,10 +185,7 @@ with the code intact.
 
 ### Repository: push `dev` first
 
-`init.mjs` leaves the repository on `dev`, with `main` at the same commit.
-GitHub makes the first branch it receives the default branch, and the default
-is where pull requests go unless someone retargets them — so push `dev` before
-`main`, and feature work targets `dev` instead of production:
+`init.mjs` leaves the repository on `dev`, with `main` at the same commit. GitHub makes the first branch it receives the default branch, and the default is where pull requests go unless someone retargets them — so push `dev` before `main`, and feature work targets `dev` instead of production:
 
 ```bash
 gh repo create <owner>/<name> --private --source . --push   # pushes the checked-out branch: dev
@@ -334,19 +193,14 @@ git push -u origin main
 gh repo view --json defaultBranchRef --jq .defaultBranchRef.name   # dev
 ```
 
-If that prints `main` (the repository existed before the push, or was created
-with an initial commit), set it: `gh repo edit --default-branch dev`.
+If that prints `main` (the repository existed before the push, or was created with an initial commit), set it: `gh repo edit --default-branch dev`.
 
 ### Environments (Variables vs Secrets)
 
-`deploy.yml` reads two kinds of config — **Variables** (non-secret, visible in
-logs) and **Secrets** (masked). The names are **identical** across `dev` and `prod`;
-the workflow selects the right environment per branch (`main` → `prod`, otherwise
-`dev`). Set both kinds on **each** environment (per-env, not repo-wide).
+`deploy.yml` reads two kinds of config — **Variables** (non-secret, visible in logs) and **Secrets** (masked). The names are **identical** across `dev` and `prod`; the workflow selects the right environment per branch (`main` → `prod`, otherwise `dev`). Set both kinds on **each** environment (per-env, not repo-wide).
 
 - Repo → Settings → Environments → create **`dev`** and **`prod`**.
-- On `prod`, optionally enable **Required reviewers** (yourself) so prod deploys
-  need a click.
+- On `prod`, optionally enable **Required reviewers** (yourself) so prod deploys need a click.
 
 **Variables** (Settings → Environments → `<env>` → Environment variables):
 
@@ -362,17 +216,14 @@ the workflow selects the right environment per branch (`main` → `prod`, otherw
 | `CLOUDFLARE_API_TOKEN` | the token from §1 (`<project> gha deploy`, same for both) |
 | `CONVEX_DEPLOY_KEY` | the env's Convex deploy key (`gha-dev` / `gha-prod`) |
 
-The worker gets no auth secrets: Better Auth runs inside the Convex deployment
-and reads its own variables there ([§2](#deployment-env-vars)).
+The worker gets no auth secrets: Better Auth runs inside the Convex deployment and reads its own variables there ([§2](#deployment-env-vars)).
 
 ---
 
 ## 5. Local dev secrets
 
-- `cp apps/web/.dev.vars.example apps/web/.dev.vars` and fill with your **dev**
-  values (`init.mjs` does this copy for you). Powers `bun dev` locally.
-- `cp apps/web/.env.local.example apps/web/.env.local` and set
-  `VITE_CONVEX_URL` to your dev deployment (embedded into local builds).
+- `cp apps/web/.dev.vars.example apps/web/.dev.vars` and fill with your **dev** values (`init.mjs` does this copy for you). Powers `bun dev` locally.
+- `cp apps/web/.env.local.example apps/web/.env.local` and set `VITE_CONVEX_URL` to your dev deployment (embedded into local builds).
 - `cd packages/api && bunx convex dev` once to link the dev deployment.
 
 ---
@@ -380,18 +231,12 @@ and reads its own variables there ([§2](#deployment-env-vars)).
 ## Acceptance — "deployed"
 
 - Pushing to `dev` triggers GitHub Actions, succeeds, and `https://dev.<domain>` loads.
-- Sign-up and sign-in with email and password work on `https://dev.<domain>`,
-  on the app's own login page — the browser never leaves the domain.
-- The signed-in `/home` route renders `Hello, {name}` (the `users` trigger + authed
-  read worked end-to-end).
+- Sign-up and sign-in with email and password work on `https://dev.<domain>`, on the app's own login page — the browser never leaves the domain.
+- The signed-in `/home` route renders `Hello, {name}` (the `users` trigger + authed read worked end-to-end).
 - **Sign out** ends the session and returns to the landing page.
-- The landing page loads for an anonymous visitor with no request to the auth
-  path.
-- **Continue with Google** works on both dev fronts — `https://dev.<domain>` and
-  the local `https://<project>.internal` — and each returns to the front it
-  started on. Google's consent screen names the product.
-- **The redirect each front sends to Google** is one the dev OAuth client
-  lists. Readable without a browser, from either front's origin:
+- The landing page loads for an anonymous visitor with no request to the auth path.
+- **Continue with Google** works on both dev fronts — `https://dev.<domain>` and the local `https://<project>.internal` — and each returns to the front it started on. Google's consent screen names the product.
+- **The redirect each front sends to Google** is one the dev OAuth client lists. Readable without a browser, from either front's origin:
 
   ```bash
   curl -s https://dev.<domain>/api/auth/sign-in/social \
@@ -400,10 +245,7 @@ and reads its own variables there ([§2](#deployment-env-vars)).
     jq -r .url | grep -o 'redirect_uri=[^&]*'
   ```
 
-  `https://dev.<domain>` prints its own callback; the local
-  `https://<project>.internal` prints the hop host `internal.<domain>`
-  (percent-encoded in both cases). Google answers `redirect_uri_mismatch` for
-  any value the dev client does not list.
+  `https://dev.<domain>` prints its own callback; the local `https://<project>.internal` prints the hop host `internal.<domain>` (percent-encoded in both cases). Google answers `redirect_uri_mismatch` for any value the dev client does not list.
 - Pushing to `main` deploys `https://<domain>` with the same flow.
 
 ---
@@ -412,38 +254,12 @@ and reads its own variables there ([§2](#deployment-env-vars)).
 
 Lessons from bringing this stack up in production — any new project will hit these.
 
-1. **Apex custom-domain bind fails on imported registrar parking records.**
-   Cloudflare imports the registrar's existing DNS when you add the zone;
-   `wrangler deploy` then can't bind the **apex** (`code 100117`) until you delete
-   the imported A/CNAME parking records (e.g. Porkbun's `pixie.porkbun.com`
-   CNAMEs + parking A records). Delete them, then re-deploy — Cloudflare creates
-   the proxied binding + TLS automatically. Subdomains (`dev.`) are usually clean.
+1. **Apex custom-domain bind fails on imported registrar parking records.** Cloudflare imports the registrar's existing DNS when you add the zone; `wrangler deploy` then can't bind the **apex** (`code 100117`) until you delete the imported A/CNAME parking records (e.g. Porkbun's `pixie.porkbun.com` CNAMEs + parking A records). Delete them, then re-deploy — Cloudflare creates the proxied binding + TLS automatically. Subdomains (`dev.`) are usually clean.
 
-2. **Convex env vars are per-deployment, and the auth setup reads them at push
-   time.** `convex env set` defaults to the **dev** deployment — set prod
-   explicitly (`--prod` or the dashboard) and **redeploy Convex** after any
-   change. `BETTER_AUTH_SECRET`, `SITE_URL`, `GOOGLE_CLIENT_ID` and
-   `GOOGLE_CLIENT_SECRET` are per-deployment; a push missing any of them fails
-   outright. Full list: [§2](#deployment-env-vars).
+2. **Convex env vars are per-deployment, and the auth setup reads them at push time.** `convex env set` defaults to the **dev** deployment — set prod explicitly (`--prod` or the dashboard) and **redeploy Convex** after any change. `BETTER_AUTH_SECRET`, `SITE_URL`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are per-deployment; a push missing any of them fails outright. Full list: [§2](#deployment-env-vars).
 
-3. **A second front needs `AUTH_TRUSTED_ORIGINS`, not a second `SITE_URL`.**
-   `SITE_URL` is one origin, and Better Auth rejects any other front's `Origin`
-   header unless it is listed in `AUTH_TRUSTED_ORIGINS`. Dev has two fronts —
-   the deployed dev host and the local devsite host — so the deployed one is
-   `SITE_URL` and the local one is the trusted origin. Prod has one front and
-   lists none.
+3. **A second front needs `AUTH_TRUSTED_ORIGINS`, not a second `SITE_URL`.** `SITE_URL` is one origin, and Better Auth rejects any other front's `Origin` header unless it is listed in `AUTH_TRUSTED_ORIGINS`. Dev has two fronts — the deployed dev host and the local devsite host — so the deployed one is `SITE_URL` and the local one is the trusted origin. Prod has one front and lists none.
 
-4. **Prod's Google client is a promotion-time step, not a day-one one.** Create
-   the prod OAuth client, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` on the
-   prod deployment, and register `https://<domain>/api/auth/callback/google` as
-   its redirect URI **before the first `main` deploy** — the push fails without
-   the two variables. Nothing else about prod Google setup can be done earlier:
-   the redirect URI names the prod host. The hop from
-   [§3](#local-google-callbacks-the-cloudflare-redirect-hop) is dev-only; prod
-   registers one redirect URI and needs no `GOOGLE_REDIRECT_URI`.
+4. **Prod's Google client is a promotion-time step, not a day-one one.** Create the prod OAuth client, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` on the prod deployment, and register `https://<domain>/api/auth/callback/google` as its redirect URI **before the first `main` deploy** — the push fails without the two variables. Nothing else about prod Google setup can be done earlier: the redirect URI names the prod host. The hop from [§3](#local-google-callbacks-the-cloudflare-redirect-hop) is dev-only; prod registers one redirect URI and needs no `GOOGLE_REDIRECT_URI`.
 
-5. **GitHub Actions Variables vs Secrets are scoped per environment.** Identical
-   names in `dev`/`prod`; the job's `environment:` selects which resolve. Keep
-   the secret manager as the source of truth and pipe
-   `op read … | gh secret set …` so
-   values never transit the terminal.
+5. **GitHub Actions Variables vs Secrets are scoped per environment.** Identical names in `dev`/`prod`; the job's `environment:` selects which resolve. Keep the secret manager as the source of truth and pipe `op read … | gh secret set …` so values never transit the terminal.

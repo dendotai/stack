@@ -15,12 +15,9 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
-# Builds the template as a downstream project's build workflow would
-# (template/.github/workflows/build.yml).
+# Builds the template as a downstream project's build workflow would (template/.github/workflows/build.yml).
 jobs:
-  # Verifies Vite + Wrangler config compile cleanly. Auth needs no
-  # build-time value at all — it lives on the Convex deployment (ADR 0004) —
-  # so the only input is a placeholder Convex URL.
+  # Verifies Vite + Wrangler config compile cleanly. Auth needs no build-time value at all — it lives on the Convex deployment (ADR 0004) — so the only input is a placeholder Convex URL.
   verify:
     runs-on: ubuntu-latest
     permissions:

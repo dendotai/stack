@@ -3,11 +3,7 @@ name: deploy
 on:
   push:
     branches: [main, dev]
-    # Docs-only pushes don't change the shipped worker (docs/, *.md, and these
-    # root files aren't bundled into the build), so skip the no-op deploy. The
-    # test and build workflows still run on these. Note: a push touching ONLY
-    # these paths is skipped entirely — fine because deploy isn't a required
-    # status check.
+    # Docs-only pushes don't change the shipped worker (docs/, *.md, and these root files aren't bundled into the build), so skip the no-op deploy. The test and build workflows still run on these. Note: a push touching ONLY these paths is skipped entirely — fine because deploy isn't a required status check.
     paths-ignore:
       - "**.md"
       - "docs/**"
@@ -17,29 +13,17 @@ on:
 
 concurrency:
   group: deploy-${{ github.ref }}
-  # Cancel an in-progress deploy when a newer commit is pushed to the same
-  # branch. Both steps are safe to interrupt: `wrangler deploy` is atomic, and
-  # `convex deploy` pushes the full desired schema+functions state — a canceled
-  # push is superseded by the newer commit redeploying that complete state. Data
-  # migrations (backfills) are run manually out-of-band, not in this workflow, so
-  # cancellation never interrupts one mid-flight.
+  # Cancel an in-progress deploy when a newer commit is pushed to the same branch. Both steps are safe to interrupt: `wrangler deploy` is atomic, and `convex deploy` pushes the full desired schema+functions state — a canceled push is superseded by the newer commit redeploying that complete state. Data migrations (backfills) are run manually out-of-band, not in this workflow, so cancellation never interrupts one mid-flight.
   cancel-in-progress: true
 
 jobs:
   deploy:
-    # The env suffix shows which environment a commit deployed to, so the dev
-    # deploy check listed on a dev→main PR does not read as a prod deploy.
+    # The env suffix shows which environment a commit deployed to, so the dev deploy check listed on a dev→main PR does not read as a prod deploy.
     name: deploy (${{ github.ref_name == 'main' && 'prod' || 'dev' }})
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
     env:
-      # Wrangler honors CLOUDFLARE_ENV as the default `--env` for every
-      # subcommand (deploy, secret bulk, …). With `legacy_env: true` (set in
-      # our build output) the worker name becomes `<top-level-name>-<env>`,
-      # i.e. `stack-dev` / `stack-prod` — so deploy and secret bulk both
-      # target the same worker without needing `--name` overrides.
-      # The expression repeats `environment:` above because Actions exposes no
-      # context holding the resolved environment name.
+      # Wrangler honors CLOUDFLARE_ENV as the default `--env` for every subcommand (deploy, secret bulk, …). With `legacy_env: true` (set in our build output) the worker name becomes `<top-level-name>-<env>`, i.e. `stack-dev` / `stack-prod` — so deploy and secret bulk both target the same worker without needing `--name` overrides. The expression repeats `environment:` above because Actions exposes no context holding the resolved environment name.
       CLOUDFLARE_ENV: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
     permissions:
       contents: read
@@ -56,16 +40,7 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      # Push backend (schema + functions) before building the worker: the build
-      # embeds VITE_CONVEX_URL, and the running worker expects the deployment it
-      # points at to already serve the current functions. The deploy key encodes
-      # which deployment to target (dev vs prod), supplied per GitHub environment.
-      # Key scopes: `deployment:deploy` plus `deployment:data:view` — installing
-      # a component (convex.config.ts installs Better Auth) reads deployment
-      # data, so `deployment:deploy` alone fails the push. A migrations step
-      # chained here (`convex run migrations:runAll`) would also need
-      # `deployment:functions:runInternalMutations`. Details and the migration
-      # gotcha: docs/SETUP.md, "Deploy-key scopes".
+      # Push backend (schema + functions) before building the worker: the build embeds VITE_CONVEX_URL, and the running worker expects the deployment it points at to already serve the current functions. The deploy key encodes which deployment to target (dev vs prod), supplied per GitHub environment. Key scopes: `deployment:deploy` plus `deployment:data:view` — installing a component (convex.config.ts installs Better Auth) reads deployment data, so `deployment:deploy` alone fails the push. A migrations step chained here (`convex run migrations:runAll`) would also need `deployment:functions:runInternalMutations`. Details and the migration gotcha: docs/SETUP.md, "Deploy-key scopes".
       - name: Deploy Convex
         working-directory: packages/api
         run: bun run deploy
@@ -86,8 +61,7 @@ jobs:
           workingDirectory: apps/web
           wranglerVersion: "4"
           command: deploy
-          # The worker holds no auth secrets: Better Auth runs on the Convex
-          # deployment and reads its own variables there (ADR 0004).
+          # The worker holds no auth secrets: Better Auth runs on the Convex deployment and reads its own variables there (ADR 0004).
           secrets: |
             CONVEX_URL
         env:

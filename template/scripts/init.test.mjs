@@ -4,10 +4,7 @@ import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-// Git must not read the developer's own config: identity, signing and hooks
-// would otherwise leak into the throwaway repos, and a missing identity would
-// fail the commit. The default branch is pinned to `master` so the rename the
-// script does on a fresh repository is observable whatever git's own default is.
+// Git must not read the developer's own config: identity, signing and hooks would otherwise leak into the throwaway repos, and a missing identity would fail the commit. The default branch is pinned to `master` so the rename the script does on a fresh repository is observable whatever git's own default is.
 const gitConfig = join(mkdtempSync(join(tmpdir(), "init-gitconfig-")), "config");
 writeFileSync(
   gitConfig,
@@ -15,9 +12,7 @@ writeFileSync(
 );
 const env = { ...process.env, GIT_CONFIG_GLOBAL: gitConfig, GIT_CONFIG_NOSYSTEM: "1" };
 
-// A small tree with the placeholders the script rewrites, plus one file it
-// leaves alone. Built rather than copied from the surrounding project, so the
-// tests also pass in a project that already ran the script.
+// A small tree with the placeholders the script rewrites, plus one file it leaves alone. Built rather than copied from the surrounding project, so the tests also pass in a project that already ran the script.
 const WRANGLER = "apps/web/wrangler.jsonc";
 const FIXTURE = {
   "package.json": '{\n  "name": "stack",\n  "dependencies": { "@stack/api": "workspace:*" }\n}\n',

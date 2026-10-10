@@ -15,11 +15,7 @@ concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
 
-# Checks the template as a downstream project's test workflow would
-# (template/.github/workflows/test.yml). The one job
-# left out is `placeholders` (`init.mjs --check`): the template holds every
-# placeholder by definition, so that check fails here and belongs downstream
-# only.
+# Checks the template as a downstream project's test workflow would (template/.github/workflows/test.yml). The one job left out is `placeholders` (`init.mjs --check`): the template holds every placeholder by definition, so that check fails here and belongs downstream only.
 jobs:
   lint:
     runs-on: ubuntu-latest

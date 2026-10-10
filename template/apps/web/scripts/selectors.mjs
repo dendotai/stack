@@ -1,9 +1,6 @@
-// The one definition of "this page is showing a signed-in session", imported by
-// auth-login.mjs and screenshot.mjs.
+// The one definition of "this page is showing a signed-in session", imported by auth-login.mjs and screenshot.mjs.
 //
-// Role + accessible name, never markup: an earlier version matched
-// `a[href="/logout"]` and both scripts died silently the day sign-out became a
-// button. A role and a name are a contract the UI keeps; an href is not.
+// Role + accessible name, never markup: an earlier version matched `a[href="/logout"]` and both scripts died silently the day sign-out became a button. A role and a name are a contract the UI keeps; an href is not.
 export const SIGNED_IN = { role: "button", name: "Sign out" };
 
 export const LOGIN_PATH = "/login";
@@ -16,15 +13,10 @@ export function isLoginUrl(url) {
   return new URL(url).pathname.startsWith(LOGIN_PATH);
 }
 
-// A losing branch of the race must not reject: its rejection would surface as
-// an unhandled one after the race has already settled. Hanging forever instead
-// lets the winner decide the outcome.
+// A losing branch of the race must not reject: its rejection would surface as an unhandled one after the race has already settled. Hanging forever instead lets the winner decide the outcome.
 const loseRace = () => new Promise(() => {});
 
-// Races the marker against the form's error alert, so rejected credentials
-// report their message at once instead of burning the whole timeout. A timeout
-// says which of the two failures happened: never left the login page, or
-// reached the app and did not find the marker.
+// Races the marker against the form's error alert, so rejected credentials report their message at once instead of burning the whole timeout. A timeout says which of the two failures happened: never left the login page, or reached the app and did not find the marker.
 export async function waitForSignedIn(page, { timeout = 60000, raceAlert = true } = {}) {
   const alert = page.getByRole("alert");
   const outcomes = [
