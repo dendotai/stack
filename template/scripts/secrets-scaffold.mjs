@@ -15,6 +15,8 @@
 // The writer targets the 1Password CLI (`op`), signed in. Any other secret manager: run `--print` and build the items by hand with the same names.
 //
 // Fields are created empty for you to fill in the manager's UI, with two exceptions the manifest marks: `generate: true` fields get 32 random bytes, base64 (never printed), and a `value` with `{domain}` is prefilled per environment from the custom domain in `apps/web/wrangler.jsonc`.
+//
+// A field with `issuedAs` is a credential some dashboard creates under a name of its own; the script prints that name (`{project}` and `{env}` filled in) so the dashboard row, the item field and the GitHub secret read as one scheme. The rule behind the names is in docs/SETUP.md, Secrets & environments.
 
 import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
@@ -63,6 +65,9 @@ const dryRun = flags["dry-run"] === true;
 const wrangler = (await import(pathToFileURL(join(ROOT, "apps/web/wrangler.jsonc")).href)).default;
 const domainOf = (env) => wrangler.env?.[env]?.routes?.[0]?.pattern;
 
+// `{key}` placeholders in a manifest string, filled from `vars`.
+const fill = (template, vars) => template.replace(/\{(\w+)\}/g, (m, key) => vars[key] ?? m);
+
 const fieldsOf = (env) => {
   const domain = domainOf(env);
   return MANIFEST.sections.flatMap((section) =>
@@ -71,7 +76,7 @@ const fieldsOf = (env) => {
       label: field.label,
       secret: field.secret === true,
       generate: field.generate === true,
-      value: field.value && domain ? field.value.replaceAll("{domain}", domain) : "",
+      value: field.value && domain ? fill(field.value, { domain }) : "",
     })),
   );
 };
@@ -85,6 +90,26 @@ for (const env of MANIFEST.environments) {
 }
 
 const itemTitle = (env) => `${name} ${env}`;
+
+// A name without `{env}` comes out once: one credential then serves every environment.
+function printIssuedNames() {
+  const rows = MANIFEST.sections.flatMap((section) =>
+    section.fields
+      .filter((field) => field.issuedAs)
+      .map((field) => {
+        const names = new Set(
+          MANIFEST.environments.map((env) => fill(field.issuedAs, { project: name, env })),
+        );
+        return [`${section.label}/${field.label}`, [...names].join(", "), field.for];
+      }),
+  );
+  if (rows.length === 0) return;
+  const width = (i) => Math.max(...rows.map((row) => row[i].length)) + 2;
+  console.log("\n  Name the credentials in the issuing dashboards:");
+  for (const [path, names, target] of rows) {
+    console.log(`    ${path.padEnd(width(0))}${names.padEnd(width(1))}${target}`);
+  }
+}
 
 if (flags.print === true) {
   console.log(`\n  One secret-manager item per environment, in the "${vault}" vault:`);
@@ -104,6 +129,7 @@ if (flags.print === true) {
         console.log(`    "${itemTitle(env)}" ${field.section}/${field.label} = ${field.value}`);
     }
   }
+  printIssuedNames();
   console.log(`\n  Read a value: op://${vault}/${itemTitle("dev")}/<section>/<label>\n`);
   process.exit(0);
 }
@@ -181,6 +207,7 @@ for (const env of MANIFEST.environments) {
   console.log(`    fill in the 1Password app: ${toFill.join(", ")}`);
 }
 
+printIssuedNames();
 console.log(`\n  Read a value: op://${vault}/${itemTitle("dev")}/<section>/<label>`);
 console.log(
   `  e.g. op read "op://${vault}/${itemTitle("dev")}/convex/deploy-key" | gh secret set CONVEX_DEPLOY_KEY --env dev\n`,

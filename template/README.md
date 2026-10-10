@@ -37,7 +37,7 @@ This tree was copied out of [`dendotai/stack`](https://github.com/dendotai/stack
 
 `bun scripts/init.mjs --check` fails when any placeholder is still in the tree; the `test` workflow (`.github/workflows/test.yml`) runs it on every push and pull request.
 
-`bun scripts/secrets-scaffold.mjs` creates the per-environment secret-manager items (`<project> dev`, `<project> prod`) from `scripts/secrets.manifest.json` with the 1Password CLI; `--print` prints the same shape as a checklist for any other manager, `--dry-run` shows the plan. The layout and the pipe commands that read from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
+`bun scripts/secrets-scaffold.mjs` creates the per-environment secret-manager items (`<project> dev`, `<project> prod`) from `scripts/secrets.manifest.json` with the 1Password CLI; `--print` prints the same shape as a checklist for any other manager, `--dry-run` shows the plan. Every run also prints the name to create each credential under in its dashboard (`<project> gha deploy`, `gha-dev`). The layout, the naming rule and the pipe commands that read from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
 
 1. `bun install`.
 2. `bun scripts/secrets-scaffold.mjs` — the per-environment secret-manager items.
