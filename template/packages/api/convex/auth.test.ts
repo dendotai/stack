@@ -11,8 +11,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-// The query is the signed-out form's only view of the gate, so it has to read
-// the same deployment variable the sign-up endpoint enforces.
+// The query is the signed-out form's only view of the gate, so it has to read the same deployment variable the sign-up endpoint enforces.
 test("signUpDisabled is false while AUTH_DISABLE_SIGNUP is unset", async () => {
   const t = convexTest(schema, modules);
   expect(await t.query(api.auth.signUpDisabled, {})).toBe(false);
@@ -24,9 +23,7 @@ test("signUpDisabled mirrors AUTH_DISABLE_SIGNUP=true", async () => {
   expect(await t.query(api.auth.signUpDisabled, {})).toBe(true);
 });
 
-// The chosen value reaches Google as `redirect_uri` and comes back as the host
-// the authorization code is delivered to, so these cases are the deployment's
-// whole defence against a forged forwarded host.
+// The chosen value reaches Google as `redirect_uri` and comes back as the host the authorization code is delivered to, so these cases are the deployment's whole defence against a forged forwarded host.
 const stubDevFronts = () => {
   vi.stubEnv("SITE_URL", "https://dev.example.com");
   vi.stubEnv("AUTH_TRUSTED_ORIGINS", "https://stack.internal");

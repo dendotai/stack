@@ -6,7 +6,6 @@
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": ["vite/client", "@cloudflare/workers-types", "@testing-library/jest-dom"],
     "paths": {
-      "#/*": ["./src/*"],
       "@/*": ["./src/*"]
     },
     "noUnusedLocals": true,

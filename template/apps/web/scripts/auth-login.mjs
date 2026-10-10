@@ -1,6 +1,4 @@
-// Signs in through the app's own login form and saves a reusable Playwright
-// session to `.auth/state.json`. `screenshot.mjs` then reuses that state
-// headlessly — no re-login until the session expires.
+// Signs in through the app's own login form and saves a reusable Playwright session to `.auth/state.json`. `screenshot.mjs` then reuses that state headlessly — no re-login until the session expires.
 //
 // Two modes:
 //   • Automated  — if `TEST_USER_EMAIL`/`TEST_USER_PASSWORD` are set (in
@@ -12,8 +10,7 @@
 //                                 # http://localhost:$PORT when PORT is set
 //   HEADED=1 bun run auth:login   # watch the automated login (debug)
 //
-// `.auth/` (the saved session) is gitignored; the test creds live in the
-// gitignored `.dev.vars` — env vars, not a file in the repo.
+// `.auth/` (the saved session) is gitignored; the test creds live in the gitignored `.dev.vars` — env vars, not a file in the repo.
 
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
@@ -44,13 +41,9 @@ const creds =
 const automated = creds !== null;
 const headed = process.env.HEADED === "1" || !automated;
 
-// The form's submit stays disabled until the page hydrates, so that transition
-// is the signal that a click will reach the handler rather than the browser's
-// own submission (#28).
+// The form's submit stays disabled until the page hydrates, so that transition is the signal that a click will reach the handler rather than the browser's own submission (#28).
 //
-// `click()` waits for the same thing on its own. This loop exists only for the
-// message: a hydration failure otherwise reads as a generic click timeout, and
-// that misdiagnosis is exactly what #30 is about.
+// `click()` waits for the same thing on its own. This loop exists only for the message: a hydration failure otherwise reads as a generic click timeout, and that misdiagnosis is exactly what #30 is about.
 async function waitForEnabled(locator, timeout = 30000) {
   await locator.waitFor({ state: "visible", timeout });
   const deadline = Date.now() + timeout;
@@ -75,8 +68,7 @@ async function interactiveLogin(page) {
   await page.goto(`${BASE}/home`, { waitUntil: "domcontentloaded" });
   console.log("\n  A browser window opened. Sign in there.");
   console.log(`  Waiting until ${BASE} renders signed-in (up to 5 min)…\n`);
-  // No alert race here: a human can retype a wrong password without the script
-  // giving up on the first rejection.
+  // No alert race here: a human can retype a wrong password without the script giving up on the first rejection.
   await waitForSignedIn(page, { timeout: 5 * 60 * 1000, raceAlert: false });
 }
 

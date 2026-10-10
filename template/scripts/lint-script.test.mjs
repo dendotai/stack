@@ -6,9 +6,7 @@ import { join } from "node:path";
 
 const ROOT_PACKAGE = JSON.parse(readFileSync(join(import.meta.dir, "../package.json"), "utf8"));
 
-// The root `lint` script is run verbatim in a throwaway monorepo whose
-// `biome` is a stub, so the test exercises the workspace fan-out and nothing
-// else. Biome itself is covered by running it for real in CI.
+// The root `lint` script is run verbatim in a throwaway monorepo whose `biome` is a stub, so the test exercises the workspace fan-out and nothing else. Biome itself is covered by running it for real in CI.
 function monorepo(workspaces) {
   const dir = mkdtempSync(join(tmpdir(), "lint-script-"));
   writeFileSync(

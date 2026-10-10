@@ -4,11 +4,7 @@
 //   bun scripts/secrets-scaffold.mjs [--vault v] [--dry-run]
 //   bun scripts/secrets-scaffold.mjs --print
 //
-// The manifest is the source of truth for the item shape docs/SETUP.md reads
-// values from: one item per environment (`<project> dev`, `<project> prod`),
-// a section per service, env-free field labels. Hand-built items get a label or
-// section slightly wrong, and every `op read "op://…"` path built on it fails;
-// this script builds them from the manifest instead.
+// The manifest is the source of truth for the item shape docs/SETUP.md reads values from: one item per environment (`<project> dev`, `<project> prod`), a section per service, env-free field labels. Hand-built items get a label or section slightly wrong, and every `op read "op://…"` path built on it fails; this script builds them from the manifest instead.
 //
 //   --vault   <name>   the vault to create the items in (default: the project
 //                      name from package.json; created when missing)
@@ -16,13 +12,9 @@
 //   --print            print the manifest as a checklist and exit; needs no
 //                      secret manager at all
 //
-// The writer targets the 1Password CLI (`op`), signed in. Any other secret
-// manager: run `--print` and build the items by hand with the same names.
+// The writer targets the 1Password CLI (`op`), signed in. Any other secret manager: run `--print` and build the items by hand with the same names.
 //
-// Fields are created empty for you to fill in the manager's UI, with two
-// exceptions the manifest marks: `generate: true` fields get 32 random bytes,
-// base64 (never printed), and a `value` with `{domain}` is prefilled per
-// environment from the custom domain in `apps/web/wrangler.jsonc`.
+// Fields are created empty for you to fill in the manager's UI, with two exceptions the manifest marks: `generate: true` fields get 32 random bytes, base64 (never printed), and a `value` with `{domain}` is prefilled per environment from the custom domain in `apps/web/wrangler.jsonc`.
 
 import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
@@ -171,9 +163,7 @@ for (const env of MANIFEST.environments) {
     );
     continue;
   }
-  // A secure note carries only the fields the manifest names; a login would add
-  // username/password fields nothing reads. The value travels on stdin so a
-  // generated secret never shows in the process list.
+  // A secure note carries only the fields the manifest names; a login would add username/password fields nothing reads. The value travels on stdin so a generated secret never shows in the process list.
   const item = {
     title,
     category: "SECURE_NOTE",
