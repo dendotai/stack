@@ -12,7 +12,7 @@ concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
 
-# Checks the template as a downstream project's test workflow would (template/.github/workflows/test.yml). The one job left out is `placeholders` (`init.mjs --check`): the template holds every placeholder by definition, so that check fails here and belongs downstream only.
+# Checks the template as a downstream project's test workflow would (template/.github/workflows/test.yml).
 jobs:
   # The merge ruleset requires this workflow's checks on every PR, so it runs on every PR and this job decides whether the checks do real work. A job skipped by its `if:` reports success, which is what lets a PR that touches only the root merge. If the file list cannot be read, it fails open and runs everything.
   changes:
