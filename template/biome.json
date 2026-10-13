@@ -30,9 +30,7 @@
   },
   "assist": {
     "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
+      "source": { "organizeImports": "on" }
     }
   },
   "linter": {
