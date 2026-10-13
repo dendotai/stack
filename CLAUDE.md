@@ -1,5 +1,9 @@
 This repo holds the `dendotai/stack` starter template plus, over time, its marketing site and tooling. The template is the `template/` directory.
 
+
+## Goal
+
+- **The stack exists so no project meets the same error twice or fixes it twice.** An error met downstream is checked against `template/` and fixed there once, so every call site and project inherits the fix without knowing the error.
 ## What is where
 
 - `template/` is what a downstream project receives, byte for byte. It is a complete bun monorepo with its own `package.json`, `bun.lock`, `biome.json` and `.github/workflows/`. It is **not** a workspace member of this root (bun workspaces do not nest). Run its checks inside it: `cd template && bun run check`, or `bun run check` from the root.
