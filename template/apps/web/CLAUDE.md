@@ -45,7 +45,7 @@ Before you build a UI component, run `bunx shadcn@latest search @shadcn -q <name
 
 `search` needs the `@shadcn` registry named: `components.json` configures no registries, and a bare `search` stops with "No registries are configured".
 
-`shadcn add` writes into `src/components/ui/`. Those files are vendor code: restyle a component where you use it, and edit its file only on purpose.
+`shadcn add` writes into `src/components/ui/`. Those files are vendor code: restyle a component where you use it, and edit its file only on purpose. Biome formats them but does not lint them (`overrides` in `biome.json`), so a fresh `shadcn add` passes `bun run check` as shadcn ships it.
 
 ## Tailwind / styling conventions
 
@@ -57,7 +57,7 @@ For duplicated class lists, follow Tailwind's own order:
 3. Reused across files → use a built-in utility (e.g. `container`) or extract a **component** with the classes inline in it.
 4. `@apply` / custom CSS only as a last resort.
 
-**Don't extract Tailwind class strings into JS constants** (e.g. `const FRAME_X = "px-3 sm:px-8"`): it loses IntelliSense + class sorting and fights co-location. When two elements must share styling (e.g. nav/content alignment), share a built-in utility or a **component**, not a string. Compose/override classes with `cn()` (`lib/utils.ts` — clsx + tailwind-merge).
+**Don't extract Tailwind class strings into JS constants** (e.g. `const FRAME_X = "px-3 sm:px-8"`): it loses IntelliSense + class sorting and fights co-location. When two elements must share styling (e.g. nav/content alignment), share a built-in utility or a **component**, not a string. Compose/override classes with `cn()` (the `cn` package, re-exported from `lib/utils.ts`).
 
 ## Selection: chrome may be unselectable, content may not
 
