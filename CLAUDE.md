@@ -15,7 +15,7 @@ Ask: does a downstream project need this file? Yes → under `template/` (fixes 
 
 A change under `template/` also writes a changelog entry, and the entry does **not** go in `template/TEMPLATE_CHANGELOG.md`. Add one file to `.changelog/` at the repo root, named after the change — `google-own-oauth-clients.md`. Two pull requests then never write the same file, so the entry cannot conflict.
 
-The directory **is** the Unreleased section: unreleased entries and nothing else, no subdirectories. Each file holds the entry exactly as it will read in the changelog — one markdown bullet on one line — and any link in it is relative to `template/`, which is where it ends up.
+The directory **is** the Unreleased section: unreleased entries and nothing else, no subdirectories. Each file holds the entry exactly as it will read in the changelog — one markdown bullet — and any link in it is relative to `template/`, which is where it ends up.
 
 `bun run release:template <version>` folds every file into a new version section of the changelog, bumps `template/VERSION`, and empties the directory. Order comes from the commit that added each file, newest first; `--dry-run` prints the section without writing.
 
