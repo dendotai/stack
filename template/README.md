@@ -39,8 +39,6 @@ This tree was copied out of [`dendotai/stack`](https://github.com/dendotai/stack
 
 `bun scripts/secrets-scaffold.mjs` creates the per-environment secret-manager items (`<project> dev`, `<project> prod`) from `scripts/secrets.manifest.json` with the 1Password CLI; `--print` prints the same shape as a checklist for any other manager, `--dry-run` shows the plan. Every run also prints the name to create each credential under in its dashboard (`<project> gha deploy`, `gha-dev`). The layout, the naming rule and the pipe commands that read from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
 
-`bun scripts/check-patches.mjs` fails when a `patchedDependencies` entry in `package.json` names a version that `bun.lock` no longer resolves, because `bun install` then skips the patch without a warning. The `patches` job in the `test` workflow runs it on every PR.
-
 1. `bun install`.
 2. `bun scripts/secrets-scaffold.mjs` — the per-environment secret-manager items.
 3. Create the GitHub repository, pushing `dev` first so it becomes the default branch, then provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.
@@ -65,6 +63,17 @@ The web dev server has no fixed port. The [`@den-ai/devsite`](https://www.npmjs.
 `apps/web/src/routeTree.gen.ts` is generated, not committed: a fresh clone has no copy until something builds it. `bun run generate` in `apps/web` does that (`tsr generate`, configured by `apps/web/tsr.config.json`), and `typecheck`, `test` and `build` each run it first, so the three commands above need no extra step.
 
 `@biomejs/biome` is pinned exactly: `biome.json` declares the schema of that version, and a newer CLI reports a mismatch. When you bump the pin, run `bunx biome migrate --write` in the same commit.
+
+## Patched dependencies
+
+A dependency changed with `bun patch` gets one line here, in the commit that adds the patch: the package and version, what the patch fixes, the upstream issue, and when to delete the patch. `package.json` holds only the `patchedDependencies` key and the patch file path, because JSON takes no comments.
+
+- None.
+
+`bun install` skips a patch without a warning once a version bump moves the package off the version in its key ([oven-sh/bun#40106](https://github.com/oven-sh/bun/issues/40106)). The `patches` job in the `test` workflow runs `bun scripts/check-patches.mjs`, which fails in that case. When it fails:
+
+- Read the upstream issue. When the new version has the fix, delete the patch file in `patches/`, its `patchedDependencies` key, and its line here.
+- Otherwise run `bun patch <name>@<new version>`, make the change from the old patch file again in the folder it prints, and run `bun patch --commit <folder>`. bun adds a new key and a new patch file and keeps the old ones: delete the old patch file and its key, and update the version in the line here.
 
 ## Deploy
 
