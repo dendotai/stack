@@ -42,6 +42,14 @@ describe("check-patches", () => {
     expect(result).toEqual({ status: 0, output: "" });
   });
 
+  test("passes when the patched version is resolved only as a nested copy", () => {
+    const result = check({
+      patchedDependencies: { "@scope/pkg@1.2.3": "patches/@scope%2Fpkg@1.2.3.patch" },
+      packages: { "@scope/pkg": "@scope/pkg@2.0.0", "acme-ui/@scope/pkg": "@scope/pkg@1.2.3" },
+    });
+    expect(result).toEqual({ status: 0, output: "" });
+  });
+
   test("fails, naming the package and both versions, when a bump moved the package off the patched version", () => {
     const result = check({
       patchedDependencies: { "@scope/pkg@1.2.3": "patches/@scope%2Fpkg@1.2.3.patch" },

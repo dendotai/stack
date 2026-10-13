@@ -39,6 +39,8 @@ This tree was copied out of [`dendotai/stack`](https://github.com/dendotai/stack
 
 `bun scripts/secrets-scaffold.mjs` creates the per-environment secret-manager items (`<project> dev`, `<project> prod`) from `scripts/secrets.manifest.json` with the 1Password CLI; `--print` prints the same shape as a checklist for any other manager, `--dry-run` shows the plan. Every run also prints the name to create each credential under in its dashboard (`<project> gha deploy`, `gha-dev`). The layout, the naming rule and the pipe commands that read from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
 
+`bun scripts/check-patches.mjs` fails when a `patchedDependencies` entry in `package.json` names a version that `bun.lock` no longer resolves, because `bun install` then skips the patch without a warning. The `patches` job in the `test` workflow runs it on every PR.
+
 1. `bun install`.
 2. `bun scripts/secrets-scaffold.mjs` — the per-environment secret-manager items.
 3. Create the GitHub repository, pushing `dev` first so it becomes the default branch, then provision the external services and wire secrets — follow **[docs/SETUP.md](docs/SETUP.md)**.

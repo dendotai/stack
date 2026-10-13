@@ -14,15 +14,21 @@ const { packages } = Bun.JSONC.parse(readFileSync("bun.lock", "utf8"));
 // Each entry's first element is `<name>@<version>`; the entry's key is not the name for a nested copy (`parent/name`).
 const resolved = new Set(Object.values(packages).map(([id]) => id));
 
+// `lastIndexOf`, because a scoped name starts with `@` too.
+const split = (id) => {
+  const at = id.lastIndexOf("@");
+  return { name: id.slice(0, at), version: id.slice(at + 1) };
+};
+
 const orphaned = patched.filter((key) => !resolved.has(key));
 for (const key of orphaned) {
-  const at = key.lastIndexOf("@");
-  const name = key.slice(0, at);
+  const { name, version } = split(key);
   const versions = [...resolved]
-    .filter((id) => id.lastIndexOf("@") === name.length && id.startsWith(name))
-    .map((id) => id.slice(name.length + 1));
+    .map(split)
+    .filter((id) => id.name === name)
+    .map((id) => id.version);
   console.error(
-    `${name}: the patch is for ${key.slice(at + 1)}, but bun.lock resolves ${versions.join(", ") || "no version"}, so bun install skips the patch. Regenerate it with \`bun patch ${name}\`.`,
+    `${name}: the patch is for ${version}, but bun.lock resolves ${versions.join(", ") || "no version"}, so bun install skips the patch. Regenerate it with \`bun patch ${name}\`.`,
   );
 }
 if (orphaned.length) process.exit(1);
