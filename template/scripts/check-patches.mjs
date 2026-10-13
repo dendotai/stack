@@ -28,7 +28,7 @@ for (const key of orphaned) {
     .filter((id) => id.name === name)
     .map((id) => id.version);
   console.error(
-    `${name}: the patch is for ${version}, but bun.lock resolves ${versions.join(", ") || "no version"}, so bun install skips the patch. Regenerate it with \`bun patch ${name}\`.`,
+    `${name}: the patch is for ${version}, but bun.lock resolves ${versions.join(", ") || "no version"}, so bun install skips the patch. The steps are in README.md, "Patched dependencies".`,
   );
 }
 if (orphaned.length) process.exit(1);
