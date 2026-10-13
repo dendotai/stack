@@ -12,7 +12,7 @@ function lock(packages) {
   return `{\n  "lockfileVersion": 1,\n  "packages": {\n${lines.join("")}  },\n}\n`;
 }
 
-function check({ patchedDependencies, packages }) {
+function check({ patchedDependencies, packages }, args = []) {
   const dir = mkdtempSync(join(tmpdir(), "check-patches-test-"));
   writeFileSync(
     join(dir, "package.json"),
@@ -21,7 +21,10 @@ function check({ patchedDependencies, packages }) {
   writeFileSync(join(dir, "bun.lock"), lock(packages));
   mkdirSync(join(dir, "scripts"));
   copyFileSync(join(import.meta.dir, "check-patches.mjs"), join(dir, "scripts/check-patches.mjs"));
-  const run = spawnSync("bun", ["scripts/check-patches.mjs"], { cwd: dir, encoding: "utf8" });
+  const run = spawnSync("bun", ["scripts/check-patches.mjs", ...args], {
+    cwd: dir,
+    encoding: "utf8",
+  });
   rmSync(dir, { recursive: true });
   return { status: run.status, output: run.stdout + run.stderr };
 }
@@ -59,5 +62,17 @@ describe("check-patches", () => {
     expect(result.output).toContain("@scope/pkg");
     expect(result.output).toContain("1.2.3");
     expect(result.output).toContain("1.3.0");
+  });
+
+  test("with --warn, prints the same message and exits 0, so an install that moved the package still finishes", () => {
+    const result = check(
+      {
+        patchedDependencies: { "@scope/pkg@1.2.3": "patches/@scope%2Fpkg@1.2.3.patch" },
+        packages: { "@scope/pkg": "@scope/pkg@1.3.0" },
+      },
+      ["--warn"],
+    );
+    expect(result.status).toBe(0);
+    expect(result.output).toContain("@scope/pkg: the patch is for 1.2.3");
   });
 });

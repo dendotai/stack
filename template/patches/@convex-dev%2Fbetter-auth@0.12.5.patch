@@ -1,0 +1,15 @@
+diff --git a/dist/react/index.d.ts b/dist/react/index.d.ts
+index 652857c519c97b92f4819cbb8f25bea33be20982..1417f0938d8374ee60f5be94541618b0ebb34a8d 100644
+--- a/dist/react/index.d.ts
++++ b/dist/react/index.d.ts
+@@ -7,8 +7,8 @@ import type { convexClient, crossDomainClient } from "../client/plugins/index.js
+ import type { EmptyObject } from "convex-helpers";
+ type CrossDomainClient = ReturnType<typeof crossDomainClient>;
+ type ConvexClient = ReturnType<typeof convexClient>;
+-type PluginsWithCrossDomain = (CrossDomainClient | ConvexClient | BetterAuthClientPlugin)[];
+-type PluginsWithoutCrossDomain = (ConvexClient | BetterAuthClientPlugin)[];
++type PluginsWithCrossDomain = (CrossDomainClient | ConvexClient)[];
++type PluginsWithoutCrossDomain = ConvexClient[];
+ type AuthClientWithPlugins<Plugins extends PluginsWithCrossDomain | PluginsWithoutCrossDomain> = ReturnType<typeof createAuthClient<BetterAuthClientPlugin & {
+     plugins: Plugins;
+ }>>;
