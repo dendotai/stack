@@ -3,6 +3,10 @@ import { api } from "@stack/api";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 import { authClient } from "../../../lib/auth-client";
 
 type Mode = "signIn" | "signUp";
@@ -65,45 +69,24 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
         <form method="post" onSubmit={onSubmit} className="space-y-4">
           {mode === "signUp" && (
             <div className="space-y-1">
-              <label htmlFor="name" className="block text-sm font-medium">
-                Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                required
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" name="name" type="text" autoComplete="name" required />
             </div>
           )}
 
           <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" name="email" type="email" autoComplete="email" required />
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
+            <Label htmlFor="password">Password</Label>
+            <Input
               id="password"
               name="password"
               type="password"
               autoComplete={mode === "signUp" ? "new-password" : "current-password"}
               required
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
           </div>
 
@@ -113,13 +96,9 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={!hydrated || submitting}
-            className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-          >
+          <Button type="submit" disabled={!hydrated || submitting} className="w-full">
             {submitLabel}
-          </button>
+          </Button>
         </form>
 
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -128,27 +107,28 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
           <span className="h-px flex-1 bg-border" />
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={onGoogleSignIn}
           disabled={!hydrated || submitting}
-          className="w-full rounded-md border border-border px-3 py-2 text-sm font-medium disabled:opacity-50"
+          className="w-full"
         >
           Continue with Google
-        </button>
+        </Button>
 
         {canSignUp && (
-          <button
+          <Button
             type="button"
+            variant="link"
             disabled={!hydrated}
             onClick={() => {
               setError(null);
               setMode(mode === "signUp" ? "signIn" : "signUp");
             }}
-            className="text-sm underline underline-offset-4 disabled:opacity-50"
           >
             {mode === "signUp" ? "Back to sign in" : "Sign up"}
-          </button>
+          </Button>
         )}
       </div>
     </main>

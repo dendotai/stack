@@ -9,6 +9,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { Button } from "@/components/ui/button";
 import { ConvexAuthProvider } from "../lib/auth-bridge";
 import { authClient } from "../lib/auth-client";
 import { isPublicPath } from "../lib/auth-gate";
@@ -127,9 +128,9 @@ function TopNav() {
 function SignOutButton() {
   const queryClient = useQueryClient();
   return (
-    <button
+    <Button
       type="button"
-      className="text-muted-foreground hover:text-foreground"
+      variant="ghost"
       onClick={async () => {
         await authClient.signOut();
         // The cache holds the signed-out user's rows; a persister would keep them on disk for the next visitor on this device.
@@ -139,6 +140,6 @@ function SignOutButton() {
       }}
     >
       Sign out
-    </button>
+    </Button>
   );
 }
