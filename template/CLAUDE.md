@@ -50,6 +50,10 @@ Document every `package.json` script in the nearest README: one concise line on 
 
 Use Tailwind idiomatically — strongly prefer the conventional, documented approach over anything bespoke, so the styling stays recognizable and doesn't drift into one-off patterns. Keep utilities inline; for reuse reach for built-in utilities and components/partials, **not** extracted class-string constants, global utility overrides, or `@apply`. When unsure, check the [Tailwind docs](https://tailwindcss.com/docs/styling-with-utility-classes) instead of inventing. Web specifics live in `apps/web/CLAUDE.md`.
 
+## UX
+
+Before building or changing the app's UX (how a user acts on an item, moves between screens, or gets feedback), read `docs/ux-principles.md`.
+
 ## Agent skills
 
 ### Issue tracker
