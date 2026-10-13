@@ -39,6 +39,14 @@ Signed-in app routes (everything under `_app`, e.g. `/home`) render inside the *
 
 The frame uses Tailwind's `container` composed inline (the documented idiom — `container` itself doesn't center or pad; don't override it globally). **To opt content into a narrower column, wrap it in `mx-auto max-w-xl` etc. inside the route — don't change the frame.** Prefer this over a custom width wrapper.
 
+## UI components: shadcn first
+
+Before you build a UI component, run `bunx shadcn@latest search @shadcn -q <name>` to see if shadcn has it. If it does, add it with `bunx shadcn@latest add <component>`, because shadcn's version is tested for keyboard and screen-reader use. Build your own only for a reason shadcn cannot meet, and write that reason in a comment at the top of the component.
+
+`search` needs the `@shadcn` registry named: `components.json` configures no registries, and a bare `search` stops with "No registries are configured".
+
+`shadcn add` writes into `src/components/ui/`. Those files are vendor code: restyle a component where you use it, and edit its file only on purpose.
+
 ## Tailwind / styling conventions
 
 Utility-first: **keep classes inline in the markup** — that's the point. Per the [Tailwind docs](https://tailwindcss.com/docs/styling-with-utility-classes), inline utilities keep changes local, code portable, and CSS from growing. Don't reach for abstraction reflexively.
