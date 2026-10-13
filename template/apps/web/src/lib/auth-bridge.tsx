@@ -1,4 +1,4 @@
-import { type AuthClient, ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexProvider } from "convex/react";
 import type { ReactNode } from "react";
 import { authClient } from "./auth-client";
@@ -17,12 +17,7 @@ export function ConvexAuthProvider({
   if (!initialToken) return <ConvexProvider client={convex}>{children}</ConvexProvider>;
 
   return (
-    <ConvexBetterAuthProvider
-      client={convex}
-      // get-convex/better-auth#420: the provider's `AuthClient` type does not match what `createAuthClient` returns for the same plugin set. Drop the cast when that issue closes.
-      authClient={authClient as unknown as AuthClient}
-      initialToken={initialToken}
-    >
+    <ConvexBetterAuthProvider client={convex} authClient={authClient} initialToken={initialToken}>
       {children}
     </ConvexBetterAuthProvider>
   );

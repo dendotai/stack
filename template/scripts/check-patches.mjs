@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
 // Fail when a `patchedDependencies` entry in package.json names a version that bun.lock no longer resolves.
 //
-//   bun scripts/check-patches.mjs
+//   bun scripts/check-patches.mjs [--warn]
+//
+//   --warn   print the same message but exit 0; `postinstall` runs it this way, because a failing install would also block the `bun add` and `bun patch` steps that fix the patch
 //
 // `bun install` drops such a patch without a warning, `--frozen-lockfile` included, so a version bump removes a `bun patch` fix silently (https://github.com/oven-sh/bun/issues/40106). Delete this script and its CI jobs once bun reports the mismatch itself.
 
@@ -31,4 +33,4 @@ for (const key of orphaned) {
     `${name}: the patch is for ${version}, but bun.lock resolves ${versions.join(", ") || "no version"}, so bun install skips the patch. The steps are in README.md, "Patched dependencies".`,
   );
 }
-if (orphaned.length) process.exit(1);
+if (orphaned.length && !process.argv.includes("--warn")) process.exit(1);

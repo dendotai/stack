@@ -50,7 +50,7 @@ This tree was copied out of [`dendotai/stack`](https://github.com/dendotai/stack
 bun run dev        # web + convex, in parallel — needs the `muxa` runner (see SETUP)
 bun run devsite    # once per machine: Caddy route for https://stack.internal (see SETUP)
 PORT=3012 bun dev  # web on http://localhost:3012 instead — a second checkout (an agent worktree)
-bun run check      # lint + typecheck + test (mirrors CI)
+bun run check      # lint + typecheck + test + patches (mirrors CI)
 bun run lint       # biome, then every workspace's own lint script (e.g. an Expo app's `expo lint`)
 bun run test       # every workspace's tests, then the scripts' own (scripts/)
 bun run build      # build every workspace
@@ -68,9 +68,9 @@ The web dev server has no fixed port. The [`@den-ai/devsite`](https://www.npmjs.
 
 A dependency changed with `bun patch` gets one line here, in the commit that adds the patch: the package and version, what the patch fixes, the upstream issue, and when to delete the patch. `package.json` holds only the `patchedDependencies` key and the patch file path, because JSON takes no comments.
 
-- None.
+- `@convex-dev/better-auth@0.12.5`: removes `BetterAuthClientPlugin` from the `PluginsWithCrossDomain` and `PluginsWithoutCrossDomain` types in `dist/react/index.d.ts`, so a `createAuthClient` result type-checks as the `authClient` of `ConvexBetterAuthProvider` with no cast at the call site. Upstream: [get-convex/better-auth#420](https://github.com/get-convex/better-auth/issues/420). Delete it when that issue closes.
 
-`bun install` skips a patch without a warning once a version bump moves the package off the version in its key ([oven-sh/bun#40106](https://github.com/oven-sh/bun/issues/40106)). The `patches` job in the `test` workflow runs `bun scripts/check-patches.mjs`, which fails in that case. When it fails:
+`bun install` skips a patch without a warning once a version bump moves the package off the version in its key ([oven-sh/bun#40106](https://github.com/oven-sh/bun/issues/40106)). `bun scripts/check-patches.mjs` catches that case in three places: the `postinstall` script runs it with `--warn` after every `bun install`, `bun add`, `bun update` and `bun patch`, and prints the message without failing the install; `bun run check` and the `patches` job in the `test` workflow run it without the flag and fail. When it reports a patch:
 
 - Read the upstream issue. When the new version has the fix, delete the patch file in `patches/`, its `patchedDependencies` key, and its line here.
 - Otherwise run `bun patch <name>@<new version>`, make the change from the old patch file again in the folder it prints, and run `bun patch --commit <folder>`. bun adds a new key and a new patch file and keeps the old ones: delete the old patch file and its key, and update the version in the line here.
