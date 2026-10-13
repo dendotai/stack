@@ -38,6 +38,17 @@ The script creates the vault when it is missing (named after the project; `--vau
 - **`convex / auth-secret` (the deployment's `BETTER_AUTH_SECRET`) is split per-env on purpose** so a dev leak can't forge prod sessions.
 - **The `google` section in each env item holds `web.client-id` and `web.client-secret`** — that environment's own OAuth client ([§3](#3-google-sign-in)). Two clients, two pairs of values, one pair per item; nothing is shared between them.
 
+### Names in the issuing dashboards
+
+A credential also has a name where it is created, and in the platform's list that name is all that tells it apart. **Prefix it with the project name wherever the platform's namespace is account-global; keep the platform default where the namespace is already the project's own.** One account hosts many projects, and a token list of rows all named after the creation template can only be matched to a project by id. Name the credential in the creation dialog: renaming later is possible, and nobody does it. `gha` names the consumer, GitHub Actions.
+
+| Credential | Namespace | Name |
+|---|---|---|
+| Cloudflare API token ([§1](#1-cloudflare-account--domain)) | account-global | `<project> gha deploy` — no env part: one token serves both environments |
+| Convex deploy key ([§2](#2-convex-two-deployments)) | the deployment's own | `gha-dev` / `gha-prod` |
+
+The Google OAuth clients take no prefix: they live in the product's own Google Cloud project ([§3](#3-google-sign-in)). The manifest carries the two names above as `issuedAs`, and the scaffold script prints them next to the item field and the GitHub secret, with `--print` and after creating the items, so the three read as one scheme.
+
 **Why split per env:** the environment is the dominant axis (most fields differ dev↔prod). A split item maps **1:1 to what you actually fill** — the GitHub `prod` environment ← `<project> prod` — so values copy straight across with no chance of grabbing a dev value for prod, and prod keeps its blast-radius isolation.
 
 **Never paste secret values through the terminal/agent.** Pipe from the manager; with `op`, the vault is the project name unless you passed `--vault`:
@@ -63,7 +74,7 @@ CI deploy keys carry only the scopes the workflow uses — for Convex, `deployme
 - Update nameservers at your registrar to Cloudflare's (the dashboard shows them).
 - Wait for **Active** status (usually <1h).
 - Note your **Account ID** (dashboard right sidebar) → `cloudflare / account-id` in both items → GitHub variable `CLOUDFLARE_ACCOUNT_ID`.
-- Create an **API token** with:
+- Create an **API token**, named **`<project> gha deploy`** in the creation dialog — it keeps the template's name otherwise, and tokens are account-global ([naming](#names-in-the-issuing-dashboards)) — with:
   - Account → Workers Scripts: **Edit**
   - Account → Account Settings: **Read**
   - Zone → Workers Routes: **Edit** (your zone)
@@ -83,9 +94,9 @@ CI deploy keys carry only the scopes the workflow uses — for Convex, `deployme
 - Sign up: <https://convex.dev/>
 - Create a project. You get a **dev deployment** automatically.
 - Create a **production deployment** (project Settings → Production deployment).
-- Generate **deploy keys** for both (Settings → Deploy keys → New):
-  - dev key → `convex / deploy-key` in `<project> dev` → GitHub `dev` env secret `CONVEX_DEPLOY_KEY`.
-  - prod key → `convex / deploy-key` in `<project> prod` → GitHub `prod` env secret `CONVEX_DEPLOY_KEY`.
+- Generate **deploy keys** for both (Settings → Deploy keys → New). A key lives in its deployment, so its name says only who uses it ([naming](#names-in-the-issuing-dashboards)):
+  - dev key `gha-dev` → `convex / deploy-key` in `<project> dev` → GitHub `dev` env secret `CONVEX_DEPLOY_KEY`.
+  - prod key `gha-prod` → `convex / deploy-key` in `<project> prod` → GitHub `prod` env secret `CONVEX_DEPLOY_KEY`.
   - Scope each key to what CI runs, nothing more — the set is in [Deploy-key scopes](#deploy-key-scopes) below.
 - Note each deployment's name and **HTTPS URL** → `convex / deployment` and `convex / url` in that env's item → GitHub variable `CONVEX_URL` (per env).
 - Locally: `cd packages/api && bunx convex dev` does an interactive browser login and links your dev deployment (no key stored locally).
@@ -202,7 +213,7 @@ If that prints `main` (the repository existed before the push, or was created wi
 
 | Name | Value |
 |---|---|
-| `CLOUDFLARE_API_TOKEN` | the token from §1 (same for both) |
+| `CLOUDFLARE_API_TOKEN` | the token from §1 (`<project> gha deploy`, same for both) |
 | `CONVEX_DEPLOY_KEY` | the env's Convex deploy key (`gha-dev` / `gha-prod`) |
 
 The worker gets no auth secrets: Better Auth runs inside the Convex deployment and reads its own variables there ([§2](#deployment-env-vars)).
