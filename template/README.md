@@ -73,7 +73,15 @@ A dependency changed with `bun patch` gets one line here, in the commit that add
 `bun install` skips a patch without a warning once a version bump moves the package off the version in its key ([oven-sh/bun#40106](https://github.com/oven-sh/bun/issues/40106)). `bun scripts/check-patches.mjs` catches that case in three places: the `postinstall` script runs it with `--warn` after every `bun install`, `bun add`, `bun update` and `bun patch`, and prints the message without failing the install; `bun run check` and the `patches` job in the `test` workflow run it without the flag and fail. When it reports a patch:
 
 - Read the upstream issue. When the new version has the fix, delete the patch file in `patches/`, its `patchedDependencies` key, and its line here.
-- Otherwise run `bun patch <name>@<new version>`, make the change from the old patch file again in the folder it prints, and run `bun patch --commit <folder>`. bun adds a new key and a new patch file and keeps the old ones: delete the old patch file and its key, and update the version in the line here.
+- Otherwise make the patch again on the new version. bun applies a patch file by line number and checks nothing around it, so the old file under a new name would change whatever the new version holds on those lines; `git apply` checks every line.
+
+  ```bash
+  bun patch <name>@<new version>
+  GIT_CEILING_DIRECTORIES="$PWD/node_modules" git -C node_modules/<name> apply -p1 "$PWD/<old patch file>"
+  bun patch --commit node_modules/<name>
+  ```
+
+  The ceiling keeps `git` from finding the project's repo, where `git apply` skips the file and still exits 0. When `git apply` fails, upstream changed that code: make the change by hand in `node_modules/<name>` before the commit step. bun adds a new key and a new patch file and keeps the old ones: delete the old patch file and its key, and update the version in the line here.
 
 ## Deploy
 
