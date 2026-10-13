@@ -2,9 +2,6 @@ name: build
 
 on:
   pull_request:
-    paths:
-      - "template/**"
-      - ".github/workflows/build.yml"
   push:
     branches: [main, dev]
     paths:
@@ -17,8 +14,36 @@ concurrency:
 
 # Builds the template as a downstream project's build workflow would (template/.github/workflows/build.yml).
 jobs:
+  # The merge ruleset requires this workflow's checks on every PR, so it runs on every PR and this job decides whether the checks do real work. A job skipped by its `if:` reports success, which is what lets a PR that touches only the root merge. If the file list cannot be read, it fails open and runs everything.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      template: ${{ steps.filter.outputs.template }}
+    steps:
+      - id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          template=true
+          if [ "$EVENT" = pull_request ]; then
+            if files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename'); then
+              grep -qE '^(template/|\.github/workflows/build\.yml$)' <<<"$files" || template=false
+            else
+              echo "::warning::Could not list the PR's changed files; running every check."
+            fi
+          fi
+          echo "template=$template" >> "$GITHUB_OUTPUT"
+          echo "template=$template"
+
   # Verifies Vite + Wrangler config compile cleanly. Auth needs no build-time value at all — it lives on the Convex deployment (ADR 0004) — so the only input is a placeholder Convex URL.
   verify:
+    needs: changes
+    if: needs.changes.outputs.template == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
