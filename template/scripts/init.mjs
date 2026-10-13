@@ -24,7 +24,7 @@
 //
 // After the commit the repository holds the two branches deploy.yml reads, `main` (production) and `dev` (where work integrates), both at that commit, with `dev` checked out. Push `dev` first and GitHub makes it the default branch, so pull requests target it (docs/SETUP.md §4). A fresh repository's only branch is renamed to `main`; branches that already exist are kept.
 //
-// `--check` walks the tree for the same placeholders and exits 1 naming every file that still has one. A project's CI runs it so a lost rewrite fails there, not at deploy. It fails on the template itself by design.
+// `--check` walks the tree for the same placeholders and exits 1 naming every file that still has one. Run it by hand after init and after each template update, so a lost rewrite fails there, not at deploy. It fails on the template itself by design.
 //
 //   @stack/            → @<scope>/            (workspace package scope)
 //   dev.stack.example  → <dev-domain>         (dev custom domain)

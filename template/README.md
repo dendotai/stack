@@ -35,7 +35,7 @@ The template is **versioned** (see [`VERSION`](VERSION) + [`TEMPLATE_CHANGELOG.m
 
 This tree was copied out of [`dendotai/stack`](https://github.com/dendotai/stack) (`template/` there) and renamed by `scripts/init.mjs`. If the placeholders are still in place, run the script first: `bun scripts/init.mjs --name acme-com` (`--dry-run` previews; the full flag list + token mapping is at the top of the script). `--name` is the domain with dots→dashes and is the single token that flows into repo/package/scope/worker names; override any derived value with its own flag (`--scope`, `--domain`, `--dev-domain`, `--host`). The script commits the rewritten files as `Initialize from template: <name>` (`--no-commit` to skip; run it inside a git repository, `git init` first on a fresh copy) — an uncommitted rewrite is one `git reset --hard` away from a half-renamed repo that only fails at deploy. It then leaves `main` and `dev` at that commit, with `dev` checked out: the two branches the deploy pipeline reads, aligned from the start. The script leaves display strings (the landing `<h1>`, the page `<title>`, this README) — `grep -rn '\bstack\b'` and edit by taste.
 
-`bun scripts/init.mjs --check` fails when any placeholder is still in the tree; the `test` workflow (`.github/workflows/test.yml`) runs it on every push and pull request.
+`bun scripts/init.mjs --check` fails when any placeholder is still in the tree. No workflow runs it: run it by hand after `init.mjs` and after each template update (see [Updating a project from the template](#updating-a-project-from-the-template)).
 
 `bun scripts/secrets-scaffold.mjs` creates the per-environment secret-manager items (`<project> dev`, `<project> prod`) from `scripts/secrets.manifest.json` with the 1Password CLI; `--print` prints the same shape as a checklist for any other manager, `--dry-run` shows the plan. Every run also prints the name to create each credential under in its dashboard (`<project> gha deploy`, `gha-dev`). The layout, the naming rule and the pipe commands that read from the items are in [docs/SETUP.md](docs/SETUP.md#secrets--environments).
 
@@ -75,6 +75,7 @@ The template evolves; pull its improvements without a hard fork:
 1. Check your project's current template version in [`VERSION`](VERSION).
 2. Read [`TEMPLATE_CHANGELOG.md`](TEMPLATE_CHANGELOG.md) in the **latest** template for every released entry **newer** than that version, then read every file in [`.changelog/`](https://github.com/dendotai/stack/tree/dev/.changelog) at the root of `dendotai/stack` — those are the entries no release has folded in yet. Each entry says what changed and, when it isn't a clean file copy, how to apply it.
 3. Apply those changes to your project (this is designed to be agent-driven — point your agent at the two changelogs and the template repo).
-4. Bump your project's `VERSION` to the version you applied up to.
+4. Run `bun scripts/init.mjs --check`: a copied file can bring a template placeholder back, and it would otherwise surface only as a wrong-zone deploy error.
+5. Bump your project's `VERSION` to the version you applied up to.
 
 Because the template stays a real, runnable app, you can also just diff specific files against `template/` in `dendotai/stack` when you want a single improvement.
