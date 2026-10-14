@@ -95,7 +95,7 @@ The template evolves; pull its improvements without a hard fork:
 
 1. Check your project's current template version in [`VERSION`](VERSION).
 2. Read [`TEMPLATE_CHANGELOG.md`](TEMPLATE_CHANGELOG.md) in the **latest** template for every released entry **newer** than that version, then read every file in [`.changelog/`](https://github.com/dendotai/stack/tree/dev/.changelog) at the root of `dendotai/stack` — those are the entries no release has folded in yet. Each entry says what changed and, when it isn't a clean file copy, how to apply it.
-3. Apply those changes to your project (this is designed to be agent-driven — point your agent at the two changelogs and the template repo).
+3. Apply those changes to your project (this is designed to be agent-driven — point your agent at the two changelogs and the template repo). When an entry adds something your project already does its own way, keep one version, yours or the template's with your data moved over, because two copies of one mechanism drift apart.
 4. Run `bun scripts/init.mjs --check`: a copied file can bring a template placeholder back, and it would otherwise surface only as a wrong-zone deploy error.
 5. Bump your project's `VERSION` to the version you applied up to.
 

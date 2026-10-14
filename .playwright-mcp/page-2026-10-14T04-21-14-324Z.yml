@@ -1,0 +1,26 @@
+- generic [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Home" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - link "Sign in" [ref=e7] [cursor=pointer]:
+        - /url: /login
+  - main [ref=e8]:
+    - generic [ref=e9]:
+      - heading "Create your account" [level=1] [ref=e26]
+      - generic [ref=e11]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Name
+          - textbox "Name" [ref=e29]
+        - generic [ref=e12]:
+          - generic [ref=e13]: Email
+          - textbox "Email" [ref=e14]
+        - generic [ref=e15]:
+          - generic [ref=e16]: Password
+          - textbox "Password" [ref=e17]
+        - button "Create account" [ref=e30]
+      - generic [ref=e18]: or
+      - button "Continue with Google" [ref=e22]
+      - button "Back to sign in" [active] [ref=e31]
+  - button "Open TanStack Devtools" [ref=e24] [cursor=pointer]:
+    - img "TanStack Devtools" [ref=e25]

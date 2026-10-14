@@ -1,0 +1,17 @@
+- generic [active] [ref=f1e1]:
+  - navigation [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - link "Home" [ref=f1e4] [cursor=pointer]:
+        - /url: /home
+      - generic [ref=f1e6]:
+        - combobox "Theme" [ref=f1e8]:
+          - option "System" [selected]
+          - option "Light"
+          - option "Dark"
+        - button "Sign out" [ref=f1e9]
+  - main [ref=f1e10]:
+    - generic [ref=f1e12]:
+      - heading "Hello, Ada" [level=1] [ref=f1e13]
+      - paragraph [ref=f1e14]: You're signed in. This is your placeholder home route — start building here.
+  - button "Open TanStack Devtools" [ref=f1e15] [cursor=pointer]:
+    - img "TanStack Devtools" [ref=f1e16]

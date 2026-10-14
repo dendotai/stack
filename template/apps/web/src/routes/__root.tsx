@@ -1,6 +1,7 @@
-import type { ConvexQueryClient } from "@convex-dev/react-query";
+import { type ConvexQueryClient, convexQuery } from "@convex-dev/react-query";
+import { api } from "@stack/api";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { type QueryClient, useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   HeadContent,
@@ -9,11 +10,13 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { type Theme, ThemeSelect } from "@/components/theme-select";
 import { Button } from "@/components/ui/button";
 import { ConvexAuthProvider } from "../lib/auth-bridge";
 import { authClient } from "../lib/auth-client";
 import { isPublicPath } from "../lib/auth-gate";
 import { getSessionToken } from "../lib/auth-session";
+import { THEME_SCRIPT } from "../lib/theme";
 import appCss from "../styles.css?url";
 
 export interface RouterAppContext {
@@ -36,6 +39,13 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     // Child routes read this instead of resolving the session a second time.
     return { sessionToken };
   },
+  // The theme is part of the first byte, so a dark-mode user never sees the light page first. A failed fetch renders `"system"`: a cosmetic setting must not break pages that load no data, and a page that does load data still fails in its own loader.
+  loader: async ({ context: { queryClient, sessionToken } }) => {
+    if (!sessionToken) return;
+    await queryClient
+      .ensureQueryData(convexQuery(api.settings.getForCaller, {}))
+      .catch(() => undefined);
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -43,20 +53,26 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       { title: "stack" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
+    scripts: [{ children: THEME_SCRIPT }],
   }),
   shellComponent: RootDocument,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { sessionToken } = Route.useRouteContext();
+  const { data: settings } = useQuery(
+    convexQuery(api.settings.getForCaller, sessionToken ? {} : "skip"),
+  );
+  const theme = settings?.theme ?? "system";
   return (
-    <html lang="en">
+    // THEME_SCRIPT adds the `dark` class before hydration, so the class on <html> differs from the server's on purpose.
+    <html lang="en" data-theme={theme} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
         <ConvexAuthProvider initialToken={sessionToken}>
-          <TopNav />
+          <TopNav theme={theme} />
           {children}
           {import.meta.env.DEV && (
             <TanStackDevtools
@@ -84,7 +100,7 @@ const NAV_LINKS: readonly NavLink[] = [
 ];
 
 // Signed-in state comes from the root route's context, not from the auth client's session hook: the server already resolved it, so the nav renders correctly in the first byte and an anonymous visitor makes no auth request. Both sign-in and sign-out navigate the whole document, so it never goes stale.
-function TopNav() {
+function TopNav({ theme }: { theme: Theme }) {
   const { sessionToken } = Route.useRouteContext();
   const signedIn = sessionToken !== null;
   const visible = NAV_LINKS.filter((link) => {
@@ -110,9 +126,13 @@ function TopNav() {
             <span className="col-start-1 row-start-1">{link.label}</span>
           </Link>
         ))}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           {signedIn ? (
-            <SignOutButton />
+            <>
+              {/* The default place for the control (ADR 0010); a project moves it freely. */}
+              <ThemeSelect theme={theme} />
+              <SignOutButton />
+            </>
           ) : (
             <a href="/login" className="text-muted-foreground hover:text-foreground">
               Sign in
