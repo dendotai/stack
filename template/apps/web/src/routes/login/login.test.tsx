@@ -1,13 +1,21 @@
+import type { SocialProvider } from "@stack/api/socialProviders";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-// The login page reads the sign-up flag through @convex-dev/react-query + TanStack Query, and signs in through the Better Auth client. Mock all three so the page renders without a live Convex client or deployment.
+// The login page reads the sign-up flag through @convex-dev/react-query + TanStack Query, signs in through the Better Auth client, and imports the project's social provider list. Mock all four so the page renders without a live Convex client or deployment.
 const state = vi.hoisted(() => ({
   signUpDisabled: undefined as undefined | boolean,
+  socialProviders: ["google"] as readonly SocialProvider[],
   signIn: vi.fn(),
   signInSocial: vi.fn(),
+}));
+
+vi.mock("@stack/api/socialProviders", () => ({
+  get socialProviders() {
+    return state.socialProviders;
+  },
 }));
 
 vi.mock("@convex-dev/react-query", () => ({
@@ -29,6 +37,7 @@ import { LoginPage } from "./-components/login-page";
 
 beforeEach(() => {
   state.signUpDisabled = false;
+  state.socialProviders = ["google"];
   state.signIn.mockReset();
   state.signInSocial.mockReset();
   state.signInSocial.mockResolvedValue({});
@@ -83,6 +92,14 @@ test("the Google button starts the social sign-in with the return path", async (
     provider: "google",
     callbackURL: "/home/settings",
   });
+});
+
+test("a project that lists no social provider shows no Google button and no divider", () => {
+  state.socialProviders = [];
+  render(<LoginPage returnPath="/home" />);
+
+  expect(screen.queryByRole("button", { name: "Continue with Google" })).not.toBeInTheDocument();
+  expect(screen.queryByText("or")).not.toBeInTheDocument();
 });
 
 test("the sign-up control switches the form to creating an account", async () => {

@@ -40,6 +40,10 @@ CONVEX_AGENT_MODE=anonymous bunx convex dev --once
 
 The first run creates the deployment and stops at the push with `<name> is not set on this Convex deployment`; `env set` cannot create the deployment on its own. The second run pushes. Acceptance passes run against that. "Deployed" is proven by downstream products, not here.
 
+## Dev server
+
+Claude starts the template's dev server itself (`bun dev` in `template/`) for any check in the running app; the user runs no dev server in this repo. This overrides the user-level rule that the user runs the test server.
+
 ## Line breaks
 
 Write each paragraph, list item, and comment point on one line, whoever writes it, Claude included; the editor soft-wraps, and no tool in this repo rewraps text. Line breaks go between paragraphs, list items, table rows, code blocks, separate comment points, and directive lines (`biome-ignore`, `@ts-expect-error`, JSDoc `@` tags).

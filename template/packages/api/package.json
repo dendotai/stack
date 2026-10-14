@@ -8,7 +8,8 @@
     "./dataModel": "./convex/_generated/dataModel.js",
     "./e2e/local-backend": "./e2e/local-backend.ts",
     "./e2e/deployment": "./e2e/deployment.ts",
-    "./e2e/server-process": "./e2e/server-process.ts"
+    "./e2e/server-process": "./e2e/server-process.ts",
+    "./socialProviders": "./convex/socialProviders.ts"
   },
   "scripts": {
     "dev": "convex dev",
