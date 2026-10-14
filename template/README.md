@@ -6,7 +6,7 @@ A minimal, **production-verified** starter for full-stack apps on this stack:
 - **Web** (`apps/web`) — [TanStack Start](https://tanstack.com/start) on **Cloudflare Workers** ([`@cloudflare/vite-plugin`](https://developers.cloudflare.com/workers/vite-plugin/)), Tailwind v4 + shadcn/ui, reads via [`@convex-dev/react-query`](https://github.com/get-convex/convex-react-query).
 - **Backend** (`packages/api`) — [Convex](https://convex.dev) (dev + prod deployments).
 - **Auth** — first-party login: [Better Auth](https://better-auth.com) inside the Convex deployment ([`@convex-dev/better-auth`](https://github.com/get-convex/better-auth)), the app's own form and its own domain, Google on the project's own OAuth client per environment ([ADR 0004](docs/adr/0004-identity-plane-better-auth-in-convex.md)).
-- **CI/CD** — GitHub Actions: PR checks + push-to-deploy (`dev` → dev env, `main` → prod).
+- **CI/CD** — GitHub Actions: PR checks + push-to-deploy (`dev` → dev env, `main` → prod); each prod deploy gets a release version from the commit prefixes ([RELEASING.md](RELEASING.md)).
 - **Mobile** — `apps/mobile/` is a README-only placeholder for a future Expo app.
 
 This is a **runnable app**, not a `{{mustache}}` skeleton: `/` landing, a sign-in form served by the app itself (email and password, or Google), and a placeholder signed-in `/home` route that reads the current user (`Hello, {name}`) — demonstrating the authed read path end-to-end. Build your app by replacing `/home`.
@@ -26,7 +26,9 @@ The template is **versioned** (see [`VERSION`](VERSION) + [`TEMPLATE_CHANGELOG.m
 │   ├── SETUP.md          # external setup: Cloudflare, Convex, GitHub, secrets
 │   ├── adr/              # architecture decision records
 │   └── agents/           # config the agent skills read: issue tracker, labels, domain docs
-├── .github/workflows/    # test.yml + build.yml (checks), deploy.yml (push-to-deploy)
+├── .github/workflows/    # test.yml + build.yml (checks), deploy.yml (release + push-to-deploy)
+├── CONTEXT.md            # glossary: the terms code, issues and docs use
+├── RELEASING.md          # the release flow: release PR, version from commit prefixes
 ├── VERSION               # template version this tree is at
 └── TEMPLATE_CHANGELOG.md # what changed between template versions
 ```
