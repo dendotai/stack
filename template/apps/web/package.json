@@ -11,11 +11,12 @@
     "build": "bun run generate && vite build",
     "preview": "vite preview",
     "test": "bun run generate && vitest run",
-    "typecheck": "bun run generate && tsc --noEmit",
+    "typecheck": "bun run generate && tsc --noEmit && tsc --noEmit -p e2e/tsconfig.json",
     "auth:login": "bun scripts/auth-login.mjs",
     "screenshots": "bun scripts/screenshot.mjs",
     "deploy": "bun run build && wrangler deploy --env prod",
-    "deploy:dev": "bun run build && wrangler deploy --env dev"
+    "deploy:dev": "bun run build && wrangler deploy --env dev",
+    "e2e": "vitest run --config e2e/vitest.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
