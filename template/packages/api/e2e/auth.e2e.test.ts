@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, expect, test } from "vitest";
+import { api, internal } from "../convex/_generated/api";
 import type { Doc } from "../convex/_generated/dataModel";
 import { deploy, inlineQuery, query, runFunction, seedTable, setEnv } from "./deployment";
 import { type LocalBackend, startBackend } from "./local-backend";
@@ -54,7 +55,7 @@ test("email/password sign-up creates a Better Auth user", async () => {
 });
 
 test("the session cookie from sign-up resolves to that user", async () => {
-  const { body, cookie } = await signUp("session@example.com");
+  const { body, cookie } = await signUp("ada+session@example.com");
 
   const res = await fetch(`${backend.siteUrl}/api/auth/get-session`, {
     headers: { Cookie: cookie, Origin: backend.siteUrl },
@@ -66,15 +67,15 @@ test("the session cookie from sign-up resolves to that user", async () => {
 });
 
 test("sign-up syncs an app users row linked by authUserId", async () => {
-  const { body } = await signUp("synced@example.com");
+  const { body } = await signUp("ada+synced@example.com");
 
-  expect(await usersByEmail("synced@example.com")).toEqual([
+  expect(await usersByEmail("ada+synced@example.com")).toEqual([
     expect.objectContaining({ name: "Ada", authUserId: body.user?.id }),
   ]);
 });
 
 test("the JWT the session mints resolves to the synced users row", async () => {
-  const { body, cookie } = await signUp("jwt@example.com");
+  const { body, cookie } = await signUp("ada+jwt@example.com");
 
   const res = await fetch(`${backend.siteUrl}/api/auth/convex/token`, {
     headers: { Cookie: cookie, Origin: backend.siteUrl },
@@ -82,8 +83,8 @@ test("the JWT the session mints resolves to the synced users row", async () => {
   const { token } = (await res.json()) as { token?: string };
   expect(token, `token endpoint returned ${res.status}`).toBeTruthy();
 
-  expect(await query(backend, "users:getCurrent", {}, { asToken: token })).toMatchObject({
-    email: "jwt@example.com",
+  expect(await query(backend, api.users.getCurrent, {}, { asToken: token })).toMatchObject({
+    email: "ada+jwt@example.com",
     authUserId: body.user?.id,
   });
 });
@@ -99,7 +100,7 @@ test("the deployment trusts the Better Auth issuer and nothing else", async () =
 
   const rejection = await query(
     backend,
-    "users:getCurrent",
+    api.users.getCurrent,
     {},
     { asToken: `${unknownIssuer}.sig` },
   ).then(
@@ -123,30 +124,34 @@ test("a deployment missing BETTER_AUTH_SECRET is refused at push", async () => {
 });
 
 test("a verified-email auth user links onto an existing unlinked row", async () => {
-  // A row from before Better Auth carries no authUserId; only a seed can make one now.
   await seedTable(backend, "users", [
-    { email: "linked@example.com", name: "Original", createdAt: 1 },
+    { email: "ada+linked@example.com", name: "Original", createdAt: 1 },
   ]);
 
   // The component calls this trigger when it creates a user; Google is what reports emailVerified: true.
-  await runFunction(backend, "auth:onCreate", {
+  await runFunction(backend, internal.auth.onCreate, {
     model: "user",
-    doc: { _id: "auth_google_1", email: "linked@example.com", emailVerified: true, name: "Ada" },
+    doc: {
+      _id: "auth_google_1",
+      email: "ada+linked@example.com",
+      emailVerified: true,
+      name: "Ada",
+    },
   });
 
-  expect(await usersByEmail("linked@example.com")).toEqual([
+  expect(await usersByEmail("ada+linked@example.com")).toEqual([
     expect.objectContaining({ name: "Original", authUserId: "auth_google_1" }),
   ]);
 });
 
 test("sign-up with a known but unverified email gets its own row", async () => {
   await seedTable(backend, "users", [
-    { email: "claimed@example.com", name: "Original", createdAt: 1 },
+    { email: "ada+claimed@example.com", name: "Original", createdAt: 1 },
   ]);
 
-  expect((await signUp("claimed@example.com")).status).toBe(200);
+  expect((await signUp("ada+claimed@example.com")).status).toBe(200);
 
-  const rows = await usersByEmail("claimed@example.com");
+  const rows = await usersByEmail("ada+claimed@example.com");
   expect(rows).toHaveLength(2);
   expect(rows.find((row) => row.name === "Original")?.authUserId).toBeUndefined();
 });
@@ -191,19 +196,19 @@ test("AUTH_DISABLE_SIGNUP refuses new registrations but keeps sign-in working", 
   const gated = await startBackend();
   try {
     await deploy(gated);
-    expect((await signUp("existing@example.com", gated)).status).toBe(200);
+    expect((await signUp("ada+existing@example.com", gated)).status).toBe(200);
 
     await setEnv(gated, "AUTH_DISABLE_SIGNUP", "true");
-    expect((await signUp("newcomer@example.com", gated)).status).toBe(400);
+    expect((await signUp("ada+newcomer@example.com", gated)).status).toBe(400);
 
     const signIn = await fetch(`${gated.siteUrl}/api/auth/sign-in/email`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Origin: gated.siteUrl },
-      body: JSON.stringify({ email: "existing@example.com", password: PASSWORD }),
+      body: JSON.stringify({ email: "ada+existing@example.com", password: PASSWORD }),
     });
     expect(signIn.status).toBe(200);
 
-    expect(await query(gated, "auth:signUpDisabled")).toBe(true);
+    expect(await query(gated, api.auth.signUpDisabled, {})).toBe(true);
   } finally {
     await gated.stop();
   }

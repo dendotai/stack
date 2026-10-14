@@ -5,6 +5,14 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import {
+  type FunctionArgs,
+  type FunctionReference,
+  type FunctionReturnType,
+  getFunctionName,
+  type WithoutSystemFields,
+} from "convex/server";
+import type { Doc, TableNames } from "../convex/_generated/dataModel";
 import type { LocalBackend } from "./local-backend";
 
 const execFileAsync = promisify(execFile);
@@ -68,12 +76,13 @@ type ConvexHttpResult =
  *
  * @param asToken - a JWT the deployment resolves through its own auth providers, as a signed-in client's call would be; without it the call runs as admin.
  */
-export async function query(
+export async function query<Query extends FunctionReference<"query">>(
   backend: LocalBackend,
-  path: string,
-  args: Record<string, unknown> = {},
+  ref: Query,
+  args: FunctionArgs<Query>,
   { asToken }: { asToken?: string } = {},
-): Promise<unknown> {
+): Promise<FunctionReturnType<Query>> {
+  const path = getFunctionName(ref);
   const res = await fetch(`${backend.url}/api/query`, {
     method: "POST",
     headers: {
@@ -87,23 +96,21 @@ export async function query(
     const reason = "errorMessage" in body ? body.errorMessage : body.message;
     throw new Error(`query ${path} failed: ${reason}`);
   }
-  return body.value;
+  return body.value as FunctionReturnType<Query>;
 }
 
-/** Runs any deployed function by name through the CLI, internal ones included, which the admin key allows. */
-export async function runFunction(
-  backend: LocalBackend,
-  name: string,
-  args: Record<string, unknown> = {},
-): Promise<void> {
-  await convexCli(backend, ["run", name, JSON.stringify(args)]);
+/** Runs a deployed function through the CLI, internal ones included, which the admin key allows. */
+export async function runFunction<
+  Fn extends FunctionReference<"query" | "mutation" | "action", "public" | "internal">,
+>(backend: LocalBackend, ref: Fn, args: FunctionArgs<Fn>): Promise<void> {
+  await convexCli(backend, ["run", getFunctionName(ref), JSON.stringify(args)]);
 }
 
 /** Inserts rows straight into a table, past every deployed function, for state the app no longer creates (a `users` row with no `authUserId`). */
-export async function seedTable(
+export async function seedTable<Table extends TableNames>(
   backend: LocalBackend,
-  table: string,
-  rows: Record<string, unknown>[],
+  table: Table,
+  rows: WithoutSystemFields<Doc<Table>>[],
 ): Promise<void> {
   const file = join(tmpdir(), `seed-${table}-${randomBytes(6).toString("hex")}.jsonl`);
   await writeFile(file, rows.map((row) => JSON.stringify(row)).join("\n"));

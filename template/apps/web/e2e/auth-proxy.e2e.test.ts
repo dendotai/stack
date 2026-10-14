@@ -1,16 +1,17 @@
+import { api } from "@stack/api";
 import { deploy, query } from "@stack/api/e2e/deployment";
 import { type LocalBackend, startBackend } from "@stack/api/e2e/local-backend";
 import { afterAll, beforeAll, expect, test } from "vitest";
-import { buildWorker, mergeBackendSurfaces, startWorker, type Worker } from "./worker";
+import { buildWorker, startBackendProxy, startWorker, type Worker } from "./worker";
 
 let backend: LocalBackend;
-let surfaces: Awaited<ReturnType<typeof mergeBackendSurfaces>>;
+let backendProxy: Awaited<ReturnType<typeof startBackendProxy>>;
 let worker: Worker;
 
 beforeAll(async () => {
   backend = await startBackend();
-  surfaces = await mergeBackendSurfaces(backend);
-  await buildWorker(surfaces.origin);
+  backendProxy = await startBackendProxy(backend);
+  await buildWorker(backendProxy.origin);
   worker = await startWorker();
   // Better Auth issues its cookies for SITE_URL, so the deployment names the Worker's origin, as a real one names the app's domain.
   await deploy(backend, { SITE_URL: worker.origin });
@@ -18,7 +19,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await worker?.stop();
-  await surfaces?.close();
+  await backendProxy?.close();
   await backend?.stop();
 });
 
@@ -62,13 +63,13 @@ test("sign-up through the Worker sets a session cookie the Worker resolves", asy
 test("sign-in through the Worker issues a Convex JWT that reaches the synced user", async () => {
   const signUp = await viaWorker("/api/auth/sign-up/email", {
     method: "POST",
-    body: { email: "signin@example.com", password: PASSWORD, name: "Ada" },
+    body: { email: "ada+signin@example.com", password: PASSWORD, name: "Ada" },
   });
   const { user } = (await signUp.json()) as { user?: { id?: string } };
 
   const signIn = await viaWorker("/api/auth/sign-in/email", {
     method: "POST",
-    body: { email: "signin@example.com", password: PASSWORD },
+    body: { email: "ada+signin@example.com", password: PASSWORD },
   });
   expect(signIn.status, await signIn.clone().text()).toBe(200);
 
@@ -76,8 +77,8 @@ test("sign-in through the Worker issues a Convex JWT that reaches the synced use
   const { token } = (await tokenRes.json()) as { token?: string };
   expect(token, `token endpoint returned ${tokenRes.status}`).toBeTruthy();
 
-  expect(await query(backend, "users:getCurrent", {}, { asToken: token })).toMatchObject({
-    email: "signin@example.com",
+  expect(await query(backend, api.users.getCurrent, {}, { asToken: token })).toMatchObject({
+    email: "ada+signin@example.com",
     authUserId: user?.id,
   });
 });
@@ -85,7 +86,7 @@ test("sign-in through the Worker issues a Convex JWT that reaches the synced use
 test("a server-rendered page sees the session cookie, and turns a visitor without one away", async () => {
   const signUp = await viaWorker("/api/auth/sign-up/email", {
     method: "POST",
-    body: { email: "render@example.com", password: PASSWORD, name: "Ada" },
+    body: { email: "ada+render@example.com", password: PASSWORD, name: "Ada" },
   });
   const cookie = sessionCookie(signUp);
 

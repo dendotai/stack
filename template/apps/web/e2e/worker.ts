@@ -1,11 +1,12 @@
-import { execFile, spawn } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { execFile } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { getFreePort, type LocalBackend } from "@stack/api/e2e/local-backend";
+import type { LocalBackend } from "@stack/api/e2e/local-backend";
+import { getFreePort, startServerProcess } from "@stack/api/e2e/server-process";
 
 const execFileAsync = promisify(execFile);
 const webRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -31,9 +32,10 @@ export async function startWorker(): Promise<Worker> {
   const envFile = join(workDir, "e2e.env");
   writeFileSync(envFile, "");
 
-  const child = spawn(
-    "bunx",
-    [
+  const { stop } = await startServerProcess({
+    name: "wrangler dev",
+    command: "bunx",
+    args: [
       "wrangler",
       "dev",
       "--port",
@@ -43,47 +45,21 @@ export async function startWorker(): Promise<Worker> {
       "--env-file",
       envFile,
     ],
-    { cwd: webRoot, stdio: ["ignore", "pipe", "pipe"] },
-  );
-  const output: string[] = [];
-  // An exception inside the Worker reaches a test only as a 5xx, so its console.error must stream to the CI log as it happens.
-  const tap = (chunk: Buffer) => {
-    output.push(chunk.toString());
-    process.stderr.write(chunk);
-  };
-  child.stdout?.on("data", tap);
-  child.stderr?.on("data", tap);
-
-  const stop = async () => {
-    if (child.exitCode === null) {
-      child.kill();
-      await new Promise<void>((resolve) => child.once("exit", () => resolve()));
-    }
-    rmSync(workDir, { recursive: true, force: true });
-  };
-
-  const deadline = Date.now() + 60_000;
-  while (Date.now() < deadline) {
-    if (child.exitCode !== null) {
-      await stop();
-      throw new Error(`wrangler dev exited with code ${child.exitCode}:\n${output.join("")}`);
-    }
-    try {
+    cwd: webRoot,
+    workDir,
+    isReady: async () => {
       await fetch(`${origin}/`, { redirect: "manual" });
-      return { origin, stop };
-    } catch {
-      // not listening yet
-    }
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  await stop();
-  throw new Error(`wrangler dev did not start within 60s:\n${output.join("")}`);
+      return true;
+    },
+    timeoutMs: 60_000,
+  });
+  return { origin, stop };
 }
 
 /**
  * Serves the backend's two ports on one origin. The Worker knows one Convex URL and derives the auth target from it, but the local backend answers its API on one port and `/api/auth/*` on another; the two path spaces never overlap, so this proxy routes on the prefix.
  */
-export async function mergeBackendSurfaces(
+export async function startBackendProxy(
   backend: LocalBackend,
 ): Promise<{ origin: string; close: () => Promise<void> }> {
   // The body is buffered again and fetch decompresses it, so these headers describe a wire format this proxy no longer sends.
