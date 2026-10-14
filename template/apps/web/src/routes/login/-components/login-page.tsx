@@ -1,5 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@stack/api";
+import { socialProviders } from "@stack/api/socialProviders";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
@@ -101,21 +102,25 @@ export function LoginPage({ returnPath }: { returnPath: string }) {
           </Button>
         </form>
 
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          or
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        {socialProviders.includes("google") && (
+          <>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              or
+              <span className="h-px flex-1 bg-border" />
+            </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onGoogleSignIn}
-          disabled={!hydrated || submitting}
-          className="w-full"
-        >
-          Continue with Google
-        </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onGoogleSignIn}
+              disabled={!hydrated || submitting}
+              className="w-full"
+            >
+              Continue with Google
+            </Button>
+          </>
+        )}
 
         {canSignUp && (
           <Button

@@ -2,7 +2,7 @@
 import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
-import { googleRedirectURI } from "./auth";
+import { googleRedirectURI, socialProvidersConfig } from "./auth";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -68,5 +68,31 @@ test("prod trusts no second front, so every request gets the base URL", () => {
   vi.stubEnv("SITE_URL", "https://example.com");
   expect(googleRedirectURI("https://stack.internal")).toBe(
     "https://example.com/api/auth/callback/google",
+  );
+});
+
+test("a project that lists no social provider needs no Google values", () => {
+  vi.stubEnv("SITE_URL", "https://example.com");
+  expect(socialProvidersConfig([], undefined)).toEqual({});
+});
+
+test("a project that lists Google gets the Google provider", () => {
+  vi.stubEnv("SITE_URL", "https://example.com");
+  vi.stubEnv("GOOGLE_CLIENT_ID", "client-id");
+  vi.stubEnv("GOOGLE_CLIENT_SECRET", "client-secret");
+  expect(socialProvidersConfig(["google"], undefined)).toEqual({
+    google: {
+      clientId: "client-id",
+      clientSecret: "client-secret",
+      redirectURI: "https://example.com/api/auth/callback/google",
+    },
+  });
+});
+
+test("a project that lists Google fails on a missing Google value, naming it", () => {
+  vi.stubEnv("SITE_URL", "https://example.com");
+  vi.stubEnv("GOOGLE_CLIENT_ID", "client-id");
+  expect(() => socialProvidersConfig(["google"], undefined)).toThrow(
+    "GOOGLE_CLIENT_SECRET is not set on this Convex deployment",
   );
 });

@@ -6,6 +6,7 @@ import type { DataModel } from "./_generated/dataModel";
 // biome-ignore lint/style/noRestrictedImports: signUpDisabled is read by the login form — its caller is by definition signed out, so the auth seam can't apply.
 import { query } from "./_generated/server";
 import authConfig from "./auth.config";
+import { type SocialProvider, socialProviders } from "./socialProviders";
 import { createFromAuthUser } from "./users";
 
 declare const process: {
@@ -83,6 +84,24 @@ export function googleRedirectURI(front: string | undefined): string {
   return process.env.GOOGLE_REDIRECT_URI ?? googleCallbackOn(front);
 }
 
+/**
+ * Better Auth's `socialProviders` entry for the providers a project lists. A listed provider requires its values, so a missing one fails the push.
+ */
+export function socialProvidersConfig(
+  providers: readonly SocialProvider[],
+  front: string | undefined,
+) {
+  if (!providers.includes("google")) return {};
+  return {
+    google: {
+      clientId: required("GOOGLE_CLIENT_ID"),
+      clientSecret: required("GOOGLE_CLIENT_SECRET"),
+      // Wins over the derived default in both the authorization URL and the code exchange, which is what lets one client serve two fronts.
+      redirectURI: googleRedirectURI(front),
+    },
+  };
+}
+
 // Better Auth runs here, in the Convex runtime, rather than in the web Worker — see ADR 0004. `front` comes from the request, so the router rebuilds auth per request; everything else is deployment config.
 export const createAuth = (ctx: GenericCtx<DataModel>, front?: string) =>
   betterAuth({
@@ -92,13 +111,6 @@ export const createAuth = (ctx: GenericCtx<DataModel>, front?: string) =>
     trustedOrigins: trustedOrigins(),
     // disableSignUp refuses new registrations only — existing email/password users keep signing in. Per-deployment so a private deployment admits only the users it already has.
     emailAndPassword: { enabled: true, disableSignUp: signUpDisabledFlag() },
-    socialProviders: {
-      google: {
-        clientId: required("GOOGLE_CLIENT_ID"),
-        clientSecret: required("GOOGLE_CLIENT_SECRET"),
-        // Wins over the derived default in both the authorization URL and the code exchange, which is what lets one client serve two fronts.
-        redirectURI: googleRedirectURI(front),
-      },
-    },
+    socialProviders: socialProvidersConfig(socialProviders, front),
     plugins: [convex({ authConfig })],
   });
