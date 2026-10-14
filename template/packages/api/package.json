@@ -5,13 +5,17 @@
   "exports": {
     ".": "./convex/_generated/api.js",
     "./schema": "./convex/schema.ts",
-    "./dataModel": "./convex/_generated/dataModel.js"
+    "./dataModel": "./convex/_generated/dataModel.js",
+    "./e2e/local-backend": "./e2e/local-backend.ts",
+    "./e2e/deployment": "./e2e/deployment.ts",
+    "./e2e/server-process": "./e2e/server-process.ts"
   },
   "scripts": {
     "dev": "convex dev",
     "deploy": "convex deploy",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p convex/tsconfig.json"
+    "typecheck": "tsc --noEmit -p convex/tsconfig.json && tsc --noEmit -p e2e/tsconfig.json",
+    "e2e": "vitest run --config e2e/vitest.config.ts"
   },
   "dependencies": {
     "@convex-dev/better-auth": "0.12.5",
@@ -21,6 +25,7 @@
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
+    "@types/node": "^22.10.2",
     "convex-test": "^0.0.51",
     "typescript": "^5.7.2",
     "vite": "^8.0.10",

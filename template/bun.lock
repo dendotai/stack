@@ -67,6 +67,7 @@
       },
       "devDependencies": {
         "@edge-runtime/vm": "^5.0.0",
+        "@types/node": "^22.10.2",
         "convex-test": "^0.0.51",
         "typescript": "^5.7.2",
         "vite": "^8.0.10",

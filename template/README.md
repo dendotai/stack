@@ -53,6 +53,8 @@ PORT=3012 bun dev  # web on http://localhost:3012 instead — a second checkout 
 bun run check      # lint + typecheck + test + patches (mirrors CI)
 bun run lint       # biome, then every workspace's own lint script (e.g. an Expo app's `expo lint`)
 bun run test       # every workspace's tests, then the scripts' own (scripts/)
+bun run e2e        # offline e2e: a local Convex backend and the built Worker; not part of check (downloads a 150 MB binary once)
+bun --filter @stack/web e2e   # one workspace's e2e only (@stack/api: the backend tests, @stack/web: the Worker tests)
 bun run build      # build every workspace
 ```
 

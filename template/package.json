@@ -16,7 +16,8 @@
     "lint": "biome check . && bun --filter '*' --if-present lint",
     "format": "biome format --write .",
     "check": "bun run lint && bun run typecheck && bun run test && bun scripts/check-patches.mjs",
-    "postinstall": "bun scripts/check-patches.mjs --warn"
+    "postinstall": "bun scripts/check-patches.mjs --warn",
+    "e2e": "bun --filter '*' --if-present e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.1",
