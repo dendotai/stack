@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { renderToString } from "react-dom/server";
 import { afterEach, expect, test, vi } from "vitest";
 
 const setSetting = vi.hoisted(() => vi.fn());
@@ -10,6 +11,10 @@ import { ThemeSelect } from "./theme-select";
 afterEach(() => {
   cleanup();
   setSetting.mockClear();
+});
+
+test("the server-rendered select is disabled, so a pick before hydration cannot be lost", () => {
+  expect(renderToString(<ThemeSelect theme="system" />)).toMatch(/<select[^>]* disabled=""/);
 });
 
 test("shows the stored theme", () => {

@@ -1,4 +1,5 @@
 import type { api } from "@stack/api";
+import { useHydrated } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useSetSetting } from "../lib/use-set-setting";
@@ -13,10 +14,13 @@ const THEMES: readonly { value: Theme; label: string }[] = [
 
 export function ThemeSelect({ theme }: { theme: Theme }) {
   const setSetting = useSetSetting();
+  // Before hydration no onChange is attached: a pick would change the select and save nothing.
+  const hydrated = useHydrated();
   return (
     <NativeSelect
       size="sm"
       aria-label="Theme"
+      disabled={!hydrated}
       value={theme}
       onChange={(event) => {
         const picked = THEMES.find((option) => option.value === event.target.value);
