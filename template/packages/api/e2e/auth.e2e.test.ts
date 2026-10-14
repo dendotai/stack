@@ -97,7 +97,12 @@ test("the deployment trusts the Better Auth issuer and nothing else", async () =
     .map((part) => Buffer.from(JSON.stringify(part)).toString("base64url"))
     .join(".");
 
-  const rejection = await query(backend, "users:getCurrent", {}, { asToken: `${unknownIssuer}.sig` }).then(
+  const rejection = await query(
+    backend,
+    "users:getCurrent",
+    {},
+    { asToken: `${unknownIssuer}.sig` },
+  ).then(
     () => "",
     (error: Error) => error.message,
   );
@@ -109,7 +114,9 @@ test("the deployment trusts the Better Auth issuer and nothing else", async () =
 test("a deployment missing BETTER_AUTH_SECRET is refused at push", async () => {
   const bare = await startBackend();
   try {
-    await expect(deploy(bare, { BETTER_AUTH_SECRET: undefined })).rejects.toThrow(/BETTER_AUTH_SECRET/);
+    await expect(deploy(bare, { BETTER_AUTH_SECRET: undefined })).rejects.toThrow(
+      /BETTER_AUTH_SECRET/,
+    );
   } finally {
     await bare.stop();
   }
@@ -117,7 +124,9 @@ test("a deployment missing BETTER_AUTH_SECRET is refused at push", async () => {
 
 test("a verified-email auth user links onto an existing unlinked row", async () => {
   // A row from before Better Auth carries no authUserId; only a seed can make one now.
-  await seedTable(backend, "users", [{ email: "linked@example.com", name: "Original", createdAt: 1 }]);
+  await seedTable(backend, "users", [
+    { email: "linked@example.com", name: "Original", createdAt: 1 },
+  ]);
 
   // The component calls this trigger when it creates a user; Google is what reports emailVerified: true.
   await runFunction(backend, "auth:onCreate", {
@@ -131,7 +140,9 @@ test("a verified-email auth user links onto an existing unlinked row", async () 
 });
 
 test("sign-up with a known but unverified email gets its own row", async () => {
-  await seedTable(backend, "users", [{ email: "claimed@example.com", name: "Original", createdAt: 1 }]);
+  await seedTable(backend, "users", [
+    { email: "claimed@example.com", name: "Original", createdAt: 1 },
+  ]);
 
   expect((await signUp("claimed@example.com")).status).toBe(200);
 
@@ -157,16 +168,18 @@ test("the Google callback follows a trusted front and ignores an untrusted one",
   const hop = "https://hop.example.com/api/auth/callback/google";
   await setEnv(backend, "AUTH_TRUSTED_ORIGINS", "https://trusted.example.com");
   try {
-    expect((await googleRedirectUri(via("trusted.example.com"))).searchParams.get("redirect_uri")).toBe(
-      "https://trusted.example.com/api/auth/callback/google",
-    );
+    expect(
+      (await googleRedirectUri(via("trusted.example.com"))).searchParams.get("redirect_uri"),
+    ).toBe("https://trusted.example.com/api/auth/callback/google");
 
     await setEnv(backend, "GOOGLE_REDIRECT_URI", hop);
-    expect((await googleRedirectUri(via("trusted.example.com"))).searchParams.get("redirect_uri")).toBe(hop);
+    expect(
+      (await googleRedirectUri(via("trusted.example.com"))).searchParams.get("redirect_uri"),
+    ).toBe(hop);
 
-    expect((await googleRedirectUri(via("evil.example.com"))).searchParams.get("redirect_uri")).toBe(
-      `${backend.siteUrl}/api/auth/callback/google`,
-    );
+    expect(
+      (await googleRedirectUri(via("evil.example.com"))).searchParams.get("redirect_uri"),
+    ).toBe(`${backend.siteUrl}/api/auth/callback/google`);
   } finally {
     await setEnv(backend, "GOOGLE_REDIRECT_URI", undefined);
     await setEnv(backend, "AUTH_TRUSTED_ORIGINS", undefined);

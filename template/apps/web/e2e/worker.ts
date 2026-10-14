@@ -33,7 +33,16 @@ export async function startWorker(): Promise<Worker> {
 
   const child = spawn(
     "bunx",
-    ["wrangler", "dev", "--port", String(port), "--persist-to", join(workDir, "state"), "--env-file", envFile],
+    [
+      "wrangler",
+      "dev",
+      "--port",
+      String(port),
+      "--persist-to",
+      join(workDir, "state"),
+      "--env-file",
+      envFile,
+    ],
     { cwd: webRoot, stdio: ["ignore", "pipe", "pipe"] },
   );
   const output: string[] = [];
@@ -87,7 +96,8 @@ export async function mergeBackendSurfaces(
       const body = Buffer.concat(chunks);
       const headers = Object.fromEntries(
         Object.entries(req.headers).filter(
-          (entry): entry is [string, string] => typeof entry[1] === "string" && !staleFraming.has(entry[0]),
+          (entry): entry is [string, string] =>
+            typeof entry[1] === "string" && !staleFraming.has(entry[0]),
         ),
       );
       const upstream = await fetch(`${target}${req.url}`, {
@@ -97,7 +107,9 @@ export async function mergeBackendSurfaces(
         redirect: "manual",
       });
       const responseHeaders: Record<string, string | string[]> = Object.fromEntries(
-        [...upstream.headers.entries()].filter(([name]) => !staleFraming.has(name) && name !== "content-encoding"),
+        [...upstream.headers.entries()].filter(
+          ([name]) => !staleFraming.has(name) && name !== "content-encoding",
+        ),
       );
       // Several set-cookie headers must stay separate, never folded into one.
       const cookies = upstream.headers.getSetCookie();

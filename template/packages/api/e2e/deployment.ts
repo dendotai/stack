@@ -109,7 +109,16 @@ export async function seedTable(
   await writeFile(file, rows.map((row) => JSON.stringify(row)).join("\n"));
   try {
     // `--append` keeps the rows earlier tests wrote.
-    await convexCli(backend, ["import", "--table", table, "--append", "--format", "jsonLines", "-y", file]);
+    await convexCli(backend, [
+      "import",
+      "--table",
+      table,
+      "--append",
+      "--format",
+      "jsonLines",
+      "-y",
+      file,
+    ]);
   } finally {
     await rm(file, { force: true });
   }
