@@ -65,3 +65,6 @@ apps/web/src/routeTree.gen.ts
 
 # Claude Code worktree checkouts (EnterWorktree) — throwaway, one per agent session
 .claude/worktrees/
+
+# e2e: the cached convex-local-backend binary (packages/api/e2e)
+packages/api/e2e/.cache/
