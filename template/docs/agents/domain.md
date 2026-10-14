@@ -15,7 +15,7 @@ Single-context repo. The monorepo layout (`apps/*`, `packages/*`) shares one dom
 
 ```
 /
-├── CONTEXT.md          ← created lazily by /domain-modeling; absent until then
+├── CONTEXT.md          ← the glossary; /domain-modeling adds terms as they get resolved
 ├── docs/adr/
 └── apps/, packages/
 ```

@@ -46,6 +46,10 @@ Fixture people are `Ada` / `ada@example.com` — reuse that identity wherever a 
 
 Document every `package.json` script in the nearest README: one concise line on what it does plus an example invocation (show both the with-args and no-args forms when both exist). Keep it short. Don't comment `package.json` itself — it's strict JSON and comments break the Vite build in CI.
 
+## Commits and releases
+
+Every commit message takes a conventional prefix (`feat:`, `fix:`, `chore:`, …), because the prefixes set the release version when `dev` merges into `main`. The release flow is in `RELEASING.md`.
+
 ## Styling (Tailwind)
 
 Use Tailwind idiomatically — strongly prefer the conventional, documented approach over anything bespoke, so the styling stays recognizable and doesn't drift into one-off patterns. Keep utilities inline; for reuse reach for built-in utilities and components/partials, **not** extracted class-string constants, global utility overrides, or `@apply`. When unsure, check the [Tailwind docs](https://tailwindcss.com/docs/styling-with-utility-classes) instead of inventing. Web specifics live in `apps/web/CLAUDE.md`.
@@ -66,4 +70,4 @@ The five canonical labels, strings equal to their names, plus the state labels t
 
 ### Domain docs
 
-Single-context: one root `CONTEXT.md` (created lazily) + `docs/adr/`. See `docs/agents/domain.md`.
+Single-context: one root `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.

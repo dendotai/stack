@@ -77,6 +77,25 @@ jobs:
 
       - run: bun run e2e
 
+  # Commit prefixes set the release version (RELEASING.md), so each commit is checked on its way into dev. A dev → main release PR is not checked again: its commits passed here.
+  commitlint:
+    if: github.event_name == 'pull_request' && github.base_ref == 'dev'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # commitlint walks the PR's commit range
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.8
+
+      - run: bun install --frozen-lockfile
+
+      - run: bunx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
   patches:
     runs-on: ubuntu-latest
     permissions:
