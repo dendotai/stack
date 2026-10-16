@@ -25,6 +25,8 @@ The directory **is** the Unreleased section: unreleased entries and nothing else
 
 `bun run release:template <version>` folds every file into a new version section of the changelog, bumps `template/VERSION`, and empties the directory. Order comes from the commit that added each file, newest first; `--dry-run` prints the section without writing.
 
+A template fix reaches each downstream project through its `.changelog/` entry at that project's next template update (`template/README.md`, "Updating a project from the template"), so a fix here opens no issue in a downstream repo.
+
 ## The template is never deployed from this repo
 
 It has no cloud Convex project, no Cloudflare Worker, and no GitHub environment secrets, and none may be created for it. A change that needs a running Convex backend (routes, components, push-time checks, codegen) uses a local anonymous deployment inside `template/packages/api`. The push checks that four values exist on the deployment and nothing more, so placeholders are enough: no real Google client, no secret manager.
