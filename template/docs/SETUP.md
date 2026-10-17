@@ -196,6 +196,10 @@ gh repo view --json defaultBranchRef --jq .defaultBranchRef.name   # dev
 
 If that prints `main` (the repository existed before the push, or was created with an initial commit), set it: `gh repo edit --default-branch dev`.
 
+### Update PRs
+
+Renovate opens the update PRs once the repository has its GitHub App: [docs/maintenance.md](maintenance.md#one-time-github-app-setup) has the one-time setup.
+
 ### Environments (Variables vs Secrets)
 
 `deploy.yml` reads two kinds of config — **Variables** (non-secret, visible in logs) and **Secrets** (masked). The names are **identical** across `dev` and `prod`; the workflow selects the right environment per branch (`main` → `prod`, otherwise `dev`). Set both kinds on **each** environment (per-env, not repo-wide).

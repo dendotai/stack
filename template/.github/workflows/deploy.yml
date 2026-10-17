@@ -36,16 +36,16 @@ jobs:
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version: 22
+          node-version: 22.23.3
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - run: bun install --frozen-lockfile
 
-      # Runs before the deploy steps because the web build receives the release version. A deploy that fails after this step leaves the tag ahead of prod; a re-run releases nothing new and deploys the same tag. Major pinned: a new semantic-release major arrives only through a reviewed edit here. RELEASING.md has the flow.
+      # Runs before the deploy steps because the web build receives the release version. A deploy that fails after this step leaves the tag ahead of prod; a re-run releases nothing new and deploys the same tag. The exact version is bumped by Renovate, and the `semantic-release-dry-run` job in test.yml dry-runs each bump on its PR. RELEASING.md has the flow.
       - name: Release
         if: github.ref_name == 'main'
-        run: bunx semantic-release@25
+        run: bunx semantic-release@25.0.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
