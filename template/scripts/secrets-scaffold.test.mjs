@@ -181,6 +181,7 @@ describe("secrets-scaffold.mjs creates the items", () => {
           "convex",
           "google",
           "app",
+          "renovate",
         ]);
         expect(field(item, "cloudflare", "api-token")).toMatchObject({
           type: "CONCEALED",

@@ -33,6 +33,6 @@ A project that publishes a package to npm adds the npm plugin and lets semantic-
 
 - Add `"@semantic-release/npm"` to the `release.plugins` list in `package.json`, before `@semantic-release/github`.
 - Publish with trusted publishing (OIDC) from npmjs.com: the workflow needs `id-token: write` and `setup-node` with `registry-url: https://registry.npmjs.org`. No token exists anywhere, and npm adds provenance on its own.
-- Run `npx semantic-release@25` with Node 24 on the path: `@semantic-release/npm` calls `npm publish`, and only npm 11.5.1 or later publishes through OIDC.
+- Run `npx semantic-release@25.0.9` with Node 24 on the path: `@semantic-release/npm` calls `npm publish`, and only npm 11.5.1 or later publishes through OIDC.
 - Build once before semantic-release runs, so the files a `bin` entry names exist when npm first reads the manifest. A `prepack` script builds the shipped files again after semantic-release writes the version.
 - Write `bin` paths without a leading `./`.

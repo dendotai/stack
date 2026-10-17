@@ -1,0 +1,55 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":pinAllExceptPeerDependencies",
+    "helpers:pinGitHubActionDigests",
+    "group:allNonMajor"
+  ],
+  "packageRules": [
+    {
+      "description": "A closed PR skips the version its title names. The default major title names only the major (`to v5`), so closing it would skip every later v5 release.",
+      "matchUpdateTypes": ["major"],
+      "commitMessageExtra": "to {{{newVersion}}}"
+    },
+    {
+      "description": "Major updates only, since group:allNonMajor holds every other update. Both packages pin a workerd version; one bumped without the other runs two runtimes.",
+      "groupName": "wrangler",
+      "matchPackageNames": ["wrangler", "@cloudflare/vite-plugin"],
+      "matchUpdateTypes": ["major"]
+    },
+    {
+      "description": "Major updates only, since group:allNonMajor holds every other update. Each Start and router package depends on one exact `@tanstack/react-router` version; bumped apart, the app installs two copies of the router.",
+      "groupName": "tanstack router",
+      "matchPackageNames": [
+        "@tanstack/react-router",
+        "@tanstack/react-router-devtools",
+        "@tanstack/react-router-ssr-query",
+        "@tanstack/react-start",
+        "@tanstack/router-cli",
+        "@tanstack/router-plugin"
+      ],
+      "matchUpdateTypes": ["major"]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The convex-local-backend release that e2e downloads.",
+      "managerFilePatterns": ["/^packages/api/e2e/CONVEX_LOCAL_BACKEND_VERSION$/"],
+      "matchStrings": ["^(?<currentValue>precompiled-\\S+)\\s*$"],
+      "depNameTemplate": "convex-local-backend",
+      "packageNameTemplate": "get-convex/convex-backend",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "regex:^precompiled-(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})-[0-9a-f]+$"
+    },
+    {
+      "customType": "regex",
+      "description": "semantic-release runs through bunx or npx, outside package.json, so every line that names its version is bumped here.",
+      "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/", "/^RELEASING\\.md$/"],
+      "matchStrings": ["\\bsemantic-release@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "semantic-release",
+      "datasourceTemplate": "npm"
+    }
+  ]
+}
