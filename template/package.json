@@ -21,10 +21,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.1",
-    "@commitlint/cli": "^21.2.3",
-    "@commitlint/config-conventional": "^21.2.3",
-    "@den-ai/devsite": "^0.1.0",
-    "typescript": "^5.7.2"
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
+    "@den-ai/devsite": "0.1.0",
+    "@den-ai/muxa": "0.2.2",
+    "typescript": "5.9.3"
   },
   "packageManager": "bun@1.3.8",
   "patchedDependencies": {

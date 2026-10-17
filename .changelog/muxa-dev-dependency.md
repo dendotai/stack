@@ -1,0 +1,1 @@
+- **`@den-ai/muxa` is a dev dependency** (`package.json`): the runner the root `dev` script calls is pinned at an exact version, so no global install is needed. To apply: `bun add -d --exact @den-ai/muxa`, then delete the process-runner line from the [`docs/SETUP.md`](docs/SETUP.md) prerequisites.

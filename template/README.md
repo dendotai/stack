@@ -49,7 +49,7 @@ This tree was copied out of [`dendotai/stack`](https://github.com/dendotai/stack
 ## Develop
 
 ```bash
-bun run dev        # web + convex, in parallel — needs the `muxa` runner (see SETUP)
+bun run dev        # web + convex, in parallel
 bun run devsite    # once per machine: Caddy route for https://stack.internal (see SETUP)
 PORT=3012 bun dev  # web on http://localhost:3012 instead — a second checkout (an agent worktree)
 bun run check      # lint + typecheck + test + patches (mirrors CI)
